@@ -59,11 +59,16 @@
 #include "TH2F.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+// MT2 stuff
+#include "L1Analyzer/L1Analyzer/interface/Davismt2.h"
+#include "L1Analyzer/L1Analyzer/interface/Hemisphere.hh"
+
 using namespace l1extra;
 
 using namespace reco;
 using namespace std;
 
+typedef math::XYZTLorentzVector LorentzVector;
 
 //////// 
 // class declaration
@@ -80,7 +85,7 @@ public:
 
 class cmpPtLorentz {
 public:
-  bool operator() (const math::XYZTLorentzVector &r1, const math::XYZTLorentzVector &r2) {
+  bool operator() (const LorentzVector &r1, const LorentzVector &r2) {
     return r1.pt()>r2.pt();
   }
 };
@@ -114,6 +119,8 @@ private:
   float dphi_normal(float phi1, float phi2);
   float dphi(float phi1, float phi2);
   float deltaR_normal(float eta1, float phi1, float eta2, float phi2);
+  Float_t CalcHemisphereAndMT2(float testmass, bool massive, std::vector<LorentzVector> jets, LorentzVector MET );
+  Float_t CalcMT2(float testmass, bool massive, LorentzVector visible1, LorentzVector visible2, LorentzVector MET );
 
   double regionPhysicalEt(const L1CaloRegion& cand) const {
     double regionLSB_=0.5;
@@ -140,14 +147,17 @@ private:
 
   edm::InputTag PUSummaryInfoInputTag;
 
-  int nBinHt=600;
-  double maxHt=3000;
+  int nBinHt=2000;
+  double maxHt=2000;
 
-  int nBinMet=100;
+  int nBinMet=500;
   double maxMet=500;
 
-  int nBinJetPt=250;
-  double maxJetPt=1000;
+  int nBinJetPt=600;
+  double maxJetPt=600;
+
+  int nBinMT2=1000;
+  double maxMT2=1000;
 
   int nBinPU = 60;
 
@@ -321,7 +331,10 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                        
   //  cout << "------- " << endl;
 
-  std::vector<math::XYZTLorentzVector> lsps;
+  std::vector<LorentzVector> lsps;
+  LorentzVector genMETvec;
+  LorentzVector genMETvec_eta30;
+  LorentzVector genMETvec_eta22;
 
   // this is generator-specific and current works for Pythia8!
   // See pythia8xxx/htmldoc/ParticleProperties.html for status codes
@@ -344,22 +357,23 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       lsps.push_back(genp->p4());
     }
 
-    // if(genp->status()!=1) continue;
-    // if(abs(genp->pdgId()) == 13) continue; // remove muons 
-    // if(abs(genp->pdgId()) == 12 || abs(genp->pdgId()) == 14 || abs(genp->pdgId()) == 16) continue; // remove neutrinos
-    // if(abs(genp->pdgId()) == 1000022) continue; // remove LSPs
-    // if(abs(genp->pdgId()) == 1000012 || abs(genp->pdgId())==1000014 || abs(genp->pdgId())==1000016 ) continue;
-    // if(abs(genp->pdgId()) == 2000012 || abs(genp->pdgId())==2000014 || abs(genp->pdgId())==2000016 ) continue;
-    // if(abs(genp->pdgId()) == 1000039 || abs(genp->pdgId())==5100039 ) continue;
-    // if(abs(genp->pdgId()) == 4000012 || abs(genp->pdgId())==4000014 || abs(genp->pdgId())==4000016 ) continue;
-    // if(abs(genp->pdgId()) == 9900012 || abs(genp->pdgId())==9900014 || abs(genp->pdgId())==9900016 ) continue;
-    // if(abs(genp->pdgId()) == 39) continue;
+    if(genp->status()!=1) continue;
+    if(abs(genp->pdgId()) == 13) continue; // remove muons 
+    if(abs(genp->pdgId()) == 12 || abs(genp->pdgId()) == 14 || abs(genp->pdgId()) == 16) continue; // remove neutrinos
+    if(abs(genp->pdgId()) == 1000022) continue; // remove LSPs
+    if(abs(genp->pdgId()) == 1000012 || abs(genp->pdgId())==1000014 || abs(genp->pdgId())==1000016 ) continue;
+    if(abs(genp->pdgId()) == 2000012 || abs(genp->pdgId())==2000014 || abs(genp->pdgId())==2000016 ) continue;
+    if(abs(genp->pdgId()) == 1000039 || abs(genp->pdgId())==5100039 ) continue; // remove gravitinos
+    if(abs(genp->pdgId()) == 4000012 || abs(genp->pdgId())==4000014 || abs(genp->pdgId())==4000016 ) continue;
+    if(abs(genp->pdgId()) == 9900012 || abs(genp->pdgId())==9900014 || abs(genp->pdgId())==9900016 ) continue;
+    if(abs(genp->pdgId()) == 39) continue;
 
-    // /// https://cmssdt.cern.ch/SDT/lxr/source/RecoMET/Configuration/python/GenMETParticles_cff.py#056
-    // if(fabs(genp->eta())>3) continue;
+    /// https://cmssdt.cern.ch/SDT/lxr/source/RecoMET/Configuration/python/GenMETParticles_cff.py#056
+    LorentzVector p3(genp->px(),genp->py(),genp->pz(),genp->energy());
+    genMETvec -= p3;
 
-    // math::XYZTLorentzVector p3(genp->px(),genp->py(),genp->pz(),genp->energy());
-    // genMETeta3-=p3;
+    if(fabs(genp->eta()) < 3.0) genMETvec_eta30 -= p3;
+    if(fabs(genp->eta()) < 2.172) genMETvec_eta22 -= p3;
 
   }
 
@@ -370,10 +384,14 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     plot1D("h_genlsp_pt",lsps.at(ilsp).pt(),weight,h_1d,nBinJetPt,0.,maxJetPt);
   }
 
-  // float genMEt_ = genMETeta3.pt();
+  float genMET = genMETvec.pt();
+  float genMET_eta30 = genMETvec_eta30.pt();
+  float genMET_eta22 = genMETvec_eta22.pt();
   // //  float genUESumEt_ = genMETeta3.sumEt();
 
-  // plot1D("h_genMET",genMEt_,1,h_1d, nBinMet,0.,maxMet);  
+  plot1D("h_genMET",genMET,1,h_1d, nBinMet,0.,maxMet);  
+  plot1D("h_genMET_eta30",genMET_eta30,1,h_1d, nBinMet,0.,maxMet);  
+  plot1D("h_genMET_eta22",genMET_eta22,1,h_1d, nBinMet,0.,maxMet);  
   // //  plot1D("h_genSumET",genUESumEt_,1,h_1d, nBinHt, 0., maxHt);  
 
 
@@ -401,9 +419,9 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   double genHT40_eta30=0.;
   double genHT40_eta22=0.;
 
-  std::vector<math::XYZTLorentzVector> genJets;
-  std::vector<math::XYZTLorentzVector> genJetsCent30;
-  std::vector<math::XYZTLorentzVector> genJetsCent22;
+  std::vector<LorentzVector> genJets;
+  std::vector<LorentzVector> genJetsCent30;
+  std::vector<LorentzVector> genJetsCent22;
 
   for (unsigned iGenJet = 0; iGenJet < genJetsHandle->size(); ++iGenJet) {
     const reco::GenJet& genJet = (*genJetsHandle) [iGenJet];
@@ -523,6 +541,17 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   plot1D("h_genjet12_dphi_eta22", dphi_genjet12_eta22, weight, h_1d, 100, -3.5, 3.5);
   plot2D("h_genjet12_dphi_vs_jet2_pt_eta22", pt_genjet2_eta22, dphi_genjet12_eta22, "2nd jet PT [GeV]", "#Delta#phi(j1,j2)", weight, h_2d, nBinJetPt, 0., maxJetPt, 100, -3.5, 3.5);
 
+  // calculate genMT2
+  float genmt2_jeteta30 = CalcHemisphereAndMT2(0.,false,genJetsCent30,genMETvec);
+  float genmt2_jeteta30_meteta30 = CalcHemisphereAndMT2(0.,false,genJetsCent30,genMETvec_eta30);
+  float genmt2_jeteta22 = CalcHemisphereAndMT2(0.,false,genJetsCent22,genMETvec);
+  float genmt2_jeteta22_meteta30 = CalcHemisphereAndMT2(0.,false,genJetsCent22,genMETvec_eta30);
+
+  plot1D("h_genmt2_jeteta30", genmt2_jeteta30, weight, h_1d, nBinMT2, 0., maxMT2);
+  plot1D("h_genmt2_jeteta30_meteta30", genmt2_jeteta30_meteta30, weight, h_1d, nBinMT2, 0., maxMT2);
+  plot1D("h_genmt2_jeteta22", genmt2_jeteta22, weight, h_1d, nBinMT2, 0., maxMT2);
+  plot1D("h_genmt2_jeteta22_meteta30", genmt2_jeteta22_meteta30, weight, h_1d, nBinMT2, 0., maxMT2);
+
 
   // //
   // // ----------------------------------------------------------------------
@@ -593,9 +622,9 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   edm::Handle<L1JetParticleCollection> L1JetsFwd2015Handle;
   iEvent.getByLabel(L1JetsFwd2015InputTag, L1JetsFwd2015Handle);
 
-  std::vector<math::XYZTLorentzVector> newJets2015;
-  std::vector<math::XYZTLorentzVector> newJets2015Cent30;
-  std::vector<math::XYZTLorentzVector> newJets2015Cent22;
+  std::vector<LorentzVector> newJets2015;
+  std::vector<LorentzVector> newJets2015Cent30;
+  std::vector<LorentzVector> newJets2015Cent22;
 
   if ( L1JetsCent2015Handle.isValid() ) {
     for (std::vector<L1JetParticle>::const_iterator jetIter = L1JetsCent2015Handle -> begin(); jetIter != L1JetsCent2015Handle->end(); ++jetIter) {
@@ -970,6 +999,92 @@ float L1Analyzer::deltaR_normal(float eta1, float phi1, float eta2, float phi2) 
   float diffeta = eta1 - eta2;
   float diffphi = dphi_normal(phi1,phi2);
   return sqrt(diffeta*diffeta + diffphi*diffphi);
+}
+
+//____________________________________________________________
+// calculate hemispheres and input them to MT2 calc
+Float_t L1Analyzer::CalcHemisphereAndMT2(float testmass, bool massive, std::vector<LorentzVector> jets, LorentzVector MET ) {
+
+  std::cout << "-- debug for MT2 calculation:" << std::endl;
+
+  // fill Pseudojets with selected objects
+  vector<float> px, py, pz, E;
+  for(unsigned int ijet=0; ijet<jets.size(); ++ijet){
+    px.push_back(jets[ijet].Px());
+    py.push_back(jets[ijet].Py());
+    pz.push_back(jets[ijet].Pz());
+    E .push_back(jets[ijet].E ());
+    std::cout << "  - jet: pt: " << jets[ijet].pt() << ", phi: " << jets[ijet].phi() << std::endl;
+  }
+  if (px.size()<2) return -999.99;
+
+  // get hemispheres (seed 2: max inv mass, association method: default 3 = minimal lund distance)
+  const int hemi_seed = 2;
+  const int hemi_association = 3;
+  //  Hemisphere* hemisp = new Hemisphere(px, py, pz, E, hemi_seed, hemi_association);
+  //  vector<int> grouping = hemisp->getGrouping();
+  Hemisphere hemisp(px, py, pz, E, hemi_seed, hemi_association);
+  vector<int> grouping = hemisp.getGrouping();
+
+  LorentzVector pseudojet1(0.,0.,0.,0.);
+  LorentzVector pseudojet2(0.,0.,0.,0.);
+
+  for(unsigned int i=0; i<px.size(); ++i){
+    if(grouping[i]==1){
+        pseudojet1.SetPx(pseudojet1.Px() + px[i]);
+        pseudojet1.SetPy(pseudojet1.Py() + py[i]);
+        pseudojet1.SetPz(pseudojet1.Pz() + pz[i]);
+        pseudojet1.SetE( pseudojet1.E()  + E[i]);
+    }else if(grouping[i] == 2){
+        pseudojet2.SetPx(pseudojet2.Px() + px[i]);
+        pseudojet2.SetPy(pseudojet2.Py() + py[i]);
+        pseudojet2.SetPz(pseudojet2.Pz() + pz[i]);
+        pseudojet2.SetE( pseudojet2.E()  + E[i]);
+    }
+  }
+  //  delete hemisp;
+
+  std::cout << "  - pseudojet1: pt: " << pseudojet1.pt() << ", phi: " << pseudojet1.phi() << std::endl;
+  std::cout << "  - pseudojet2: pt: " << pseudojet2.pt() << ", phi: " << pseudojet2.phi() << std::endl;
+
+  return CalcMT2(testmass, massive, pseudojet1, pseudojet2, MET);
+
+}
+
+
+//____________________________________________________________
+// calculate MT2
+Float_t L1Analyzer::CalcMT2(float testmass, bool massive, LorentzVector visible1, LorentzVector visible2, LorentzVector MET ){
+
+  double pa[3];
+  double pb[3];
+  double pmiss[3];
+
+  pmiss[0] = 0;
+  pmiss[1] = static_cast<double> (MET.Px());
+  pmiss[2] = static_cast<double> (MET.Py());
+
+  pa[0] = static_cast<double> (massive ? visible1.M() : 0);
+  pa[1] = static_cast<double> (visible1.Px());
+  pa[2] = static_cast<double> (visible1.Py());
+
+  pb[0] = static_cast<double> (massive ? visible2.M() : 0);
+  pb[1] = static_cast<double> (visible2.Px());
+  pb[2] = static_cast<double> (visible2.Py());
+
+  // Davismt2 *mt2 = new Davismt2();
+  // mt2->set_momenta(pa, pb, pmiss);
+  // mt2->set_mn(testmass);
+  // Float_t MT2=mt2->get_mt2();
+  // delete mt2;
+
+  Davismt2 mt2;
+  mt2.set_momenta(pa, pb, pmiss);
+  mt2.set_mn(testmass);
+  Float_t MT2=mt2.get_mt2();
+
+  std::cout << "  - MT2 value: " << MT2 << std::endl;
+  return MT2;
 }
 
 // ------------ method called once each job just before starting event loop  ------------
