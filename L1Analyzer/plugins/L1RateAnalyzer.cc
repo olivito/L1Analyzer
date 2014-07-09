@@ -135,10 +135,12 @@ private:
   edm::InputTag HcalTriggerPrimitiveInputTag;
   edm::InputTag L1JetsCentInputTag;
   edm::InputTag L1JetsFwdInputTag;
+  edm::InputTag L1EtMissInputTag;
   edm::InputTag L1MHTInputTag;
   //
   edm::InputTag L1JetsCent2015InputTag;
   edm::InputTag L1JetsFwd2015InputTag;
+  edm::InputTag L1EtMiss2015InputTag;
   edm::InputTag L1MHT2015InputTag;
   edm::InputTag Regions2015InputTag;
   edm::InputTag CorRegions2015InputTag;
@@ -147,6 +149,9 @@ private:
 
   int nBinHt=2000;
   double maxHt=2000;
+
+  int nBinMet=500;
+  double maxMet=500;
 
   int nBinJetPt=600;
   double maxJetPt=600;
@@ -187,10 +192,12 @@ L1RateAnalyzer::L1RateAnalyzer(const edm::ParameterSet& iConfig)
   HcalTriggerPrimitiveInputTag= iConfig.getParameter<edm::InputTag>("HcalTriggerPrimitiveInputTag");
   L1JetsCentInputTag = iConfig.getParameter<edm::InputTag>("L1JetsCentInputTag");
   L1JetsFwdInputTag = iConfig.getParameter<edm::InputTag>("L1JetsFwdInputTag");
+  L1EtMissInputTag = iConfig.getParameter<edm::InputTag>("L1EtMissInputTag");
   L1MHTInputTag = iConfig.getParameter<edm::InputTag>("L1MHTInputTag");
   //
   L1JetsCent2015InputTag = iConfig.getParameter<edm::InputTag>("L1JetsCent2015InputTag");
   L1JetsFwd2015InputTag = iConfig.getParameter<edm::InputTag>("L1JetsFwd2015InputTag");
+  L1EtMiss2015InputTag = iConfig.getParameter<edm::InputTag>("L1EtMiss2015InputTag");
   L1MHT2015InputTag= iConfig.getParameter<edm::InputTag>("L1MHT2015InputTag");
   Regions2015InputTag= iConfig.getParameter<edm::InputTag>("Regions2015InputTag");
   CorRegions2015InputTag= iConfig.getParameter<edm::InputTag>("CorRegions2015InputTag");
@@ -286,7 +293,7 @@ L1RateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   if (applyGenWeights_) {
     Handle<GenEventInfoProduct> evt_info;
     iEvent.getByLabel("generator", evt_info);
-    if(weight>0) weight = evt_info->weight();       
+    if(evt_info->weight()>0) weight = evt_info->weight();       
   }
   
   //
@@ -582,7 +589,6 @@ L1RateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     plot2D("h_HTjets_eta22_vs_jet2pt_eta22_dphiL",pt_jet2_eta22,HTjets_eta22,"2nd Jet PT [GeV]","HT from jets [GeV]",weight,h_2d,nBinJetPt,0.,maxJetPt,nBinHt,0.,maxHt);
   }
 
-
   //
   // ----------------------------------------------------------------------
   // retrieve the caloMHT objects
@@ -656,6 +662,8 @@ L1RateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   */
 
   double rawHT = 0;
+  double rawHT_reget7 = 0;
+  double rawHT_reget20 = 0.;
 
   float regionET1 = 0.;
   float regionET2 = 0.;
@@ -669,6 +677,14 @@ L1RateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
 
     double regionET =  regionPhysicalEt(*newRegion);
+
+    if (regionET >= 7.) {
+      rawHT_reget7 += regionET;
+    }
+    if (regionET >= 20.) {
+      rawHT_reget20 += regionET;
+    }
+
     if (regionET > regionET1) {
       regionET3 = regionET2;
       regionET2 = regionET1;
@@ -703,6 +719,8 @@ L1RateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   plot2D("h_regionET3_vs_HT2015",caloHt2015_,regionET3,"HT [GeV]","3rd Highest Region Et [GeV]",weight,h_2d,nBinHt,0.,maxHt,1000,0.,1000.);
 
   plotHT(rawHT,nPU,"rawHT",weight,nBinHt,maxHt);
+  plotHT(rawHT_reget7,nPU,"rawHT_reget7",weight,nBinHt,maxHt);
+  plotHT(rawHT_reget20,nPU,"rawHT_reget20",weight,nBinHt,maxHt);
   plot2D("h_recompRawHTcorr",rawHT,caloHt2015_,"recomputed Raw HT [GeV]","2015 HT [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
 
   //
@@ -823,6 +841,9 @@ L1RateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   plot2D("h_recompHTcorr",HT,caloHt2015_,"recomputed HT [GeV]","2015 HT [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
 
+  plot2D("h_rawHT_reget7_vs_HT_reget7",HT_reget7,rawHT_reget7,"HT with PU correction [GeV]","HT without PU correction [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
+  plot2D("h_rawHT_reget20_vs_HT_reget20",HT_reget20,rawHT_reget20,"HT with PU correction [GeV]","HT without PU correction [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
+
   plotHT(HT,nPU,"HT",weight,nBinHt,maxHt);
   plotHT(HT_reget0,nPU,"HT_reget0",weight,nBinHt,maxHt);
   plotHT(HT_reget3,nPU,"HT_reget3",weight,nBinHt,maxHt);
@@ -916,6 +937,32 @@ L1RateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     plot2D("h_HT_eta22_reget20_vs_jet2pt_eta22_dphiL",pt_jet2_eta22,HT_eta22_reget20,"2nd Jet PT [GeV]","HT [GeV]",weight,h_2d,nBinJetPt,0.,maxJetPt,nBinHt,0.,maxHt);
   }
 
+  // 2d jet2 (w/dphi) vs jet3/4, after HT cut
+  if (fabs(dphi_jet12_eta30) < 2.6) {
+    if (HT_reget7 > 110.) {
+      plot2D("h_jet3pt_eta30_vs_jet2pt_eta30_dphiT_HT_reget7_cut110",pt_jet2_eta30,pt_jet3_eta30,"2nd Jet PT [GeV]","3rd Jet PT [GeV]",weight,h_2d,nBinJetPt,0.,maxJetPt,nBinJetPt,0.,maxJetPt);
+      plot2D("h_jet4pt_eta30_vs_jet2pt_eta30_dphiT_HT_reget7_cut110",pt_jet2_eta30,pt_jet4_eta30,"2nd Jet PT [GeV]","4th Jet PT [GeV]",weight,h_2d,nBinJetPt,0.,maxJetPt,nBinJetPt,0.,maxJetPt);
+    }
+  } // if (fabs(dphi_jet12_eta30) < 2.6)
+
+
+  // HT regions vs HT jets
+  plot2D("h_HTjets_eta30_vs_HTreg_reget7",HT_reget7,HTjets_eta30,"HT from regions [GeV]","HT from jets [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
+  plot2D("h_HTjets_eta30_vs_HTreg_reget20",HT_reget20,HTjets_eta30,"HT from regions [GeV]","HT from jets [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
+  if (pt_jet1_eta30 > 0. && pt_jet2_eta30 < 1.) {
+    plot2D("h_HTjets_eta30_vs_HTreg_reget7_1jet",HT_reget7,HTjets_eta30,"HT from regions [GeV]","HT from jets [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
+    plot2D("h_HTjets_eta30_vs_HTreg_reget20_1jet",HT_reget20,HTjets_eta30,"HT from regions [GeV]","HT from jets [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
+  } else if (pt_jet2_eta30 > 0. && pt_jet3_eta30 < 1.) {
+    plot2D("h_HTjets_eta30_vs_HTreg_reget7_2jet",HT_reget7,HTjets_eta30,"HT from regions [GeV]","HT from jets [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
+    plot2D("h_HTjets_eta30_vs_HTreg_reget20_2jet",HT_reget20,HTjets_eta30,"HT from regions [GeV]","HT from jets [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
+  }  else if (pt_jet3_eta30 > 0. && pt_jet4_eta30 < 1.) {
+    plot2D("h_HTjets_eta30_vs_HTreg_reget7_3jet",HT_reget7,HTjets_eta30,"HT from regions [GeV]","HT from jets [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
+    plot2D("h_HTjets_eta30_vs_HTreg_reget20_3jet",HT_reget20,HTjets_eta30,"HT from regions [GeV]","HT from jets [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
+  }  else if (pt_jet4_eta30 > 0.) {
+    plot2D("h_HTjets_eta30_vs_HTreg_reget7_4jet",HT_reget7,HTjets_eta30,"HT from regions [GeV]","HT from jets [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
+    plot2D("h_HTjets_eta30_vs_HTreg_reget20_4jet",HT_reget20,HTjets_eta30,"HT from regions [GeV]","HT from jets [GeV]",weight,h_2d,nBinHt,0.,maxHt,nBinHt,0.,maxHt);
+  }
+
   //
   // ----------------------------------------------------------------------
   // trigger primitives
@@ -984,6 +1031,54 @@ L1RateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     plot2D("h_hcaltp3_vs_HT2015",caloHt2015_,hcaltp3,"HT [GeV]","3rd Highest Et HCAL TP",weight,h_2d,nBinHt,0.,maxHt,1000,0.,1000.);
 
   } // if doTPPlots
+
+  //
+  // ----------------------------------------------------------------------
+  // retrieve the caloMET objects
+  //
+
+  double caloMEt_=0;
+  //  double caloMEtPhi_=0;
+  //  double caloSumEt_=0;
+
+  edm::Handle<L1EtMissParticleCollection> L1EtMissHandle;
+  iEvent.getByLabel(L1EtMissInputTag, L1EtMissHandle);
+
+  if (L1EtMissHandle.isValid() ) {
+    if(doDebug) std::cout << " -----  L1EtMiss (calo) objects  -----  " << std::endl;
+    for (L1EtMissParticleCollection::const_iterator caloEtmIter = L1EtMissHandle->begin(); caloEtmIter != L1EtMissHandle->end(); ++caloEtmIter) {
+
+      caloMEt_=caloEtmIter -> et();
+    }
+  }
+
+  plot1D("h_caloMET",caloMEt_,1,h_1d, nBinMet,0.,maxMet);
+  if (doPUPlots_) plot2D("h_caloMET_vs_nPU",nPU,caloMEt_,"nPU","HT [GeV]",weight,h_2d,nBinPU,0.,nBinPU,nBinMet,0.,maxMet);
+
+  //
+  // ----------------------------------------------------------------------
+  // retrieve the caloMET objects 2015
+  //
+
+  double caloMEt2015_=0;
+  //  double caloSumEt2015_=0;
+
+  edm::Handle<L1EtMissParticleCollection> L1EtMiss2015Handle;
+  iEvent.getByLabel(L1EtMiss2015InputTag, L1EtMiss2015Handle);
+
+  if (L1EtMiss2015Handle.isValid() ) {
+    if(doDebug) std::cout << " -----  L1EtMiss (calo) objects  -----  " << std::endl;
+    for (L1EtMissParticleCollection::const_iterator caloEtmIter = L1EtMiss2015Handle->begin(); caloEtmIter != L1EtMiss2015Handle->end(); ++caloEtmIter) {
+      //      float etmis = caloEtmIter -> et();
+
+      caloMEt2015_=caloEtmIter -> et();
+      //      caloSumEt2015_=caloEtmIter -> etTotal();  
+
+    }
+  }
+
+  plot1D("h_caloMET2015",caloMEt2015_,1,h_1d, nBinMet,0.,maxMet);
+  if (doPUPlots_) plot2D("h_caloMET2015_vs_nPU",nPU,caloMEt2015_,"nPU","HT [GeV]",weight,h_2d,nBinPU,0.,nBinPU,nBinMet,0.,maxMet);
 
 }
 
