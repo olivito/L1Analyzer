@@ -16,3 +16,22 @@ cd ../..
 git clone git@github.com:olivito/L1Analyzer.git
 
 scram b -j 8
+
+#### examples of running
+
+cd L1Analyzer/L1Analyzer/test
+
+# histograms for signal
+cmsRun runUCTToGTinterface_T2tt_SIGNAL.py
+
+# histograms for rates (minbias, small test)
+cmsRun runUCTToGTinterface_rates_minbias.py
+
+# simple flat ntuple for rates (minbias, small test)
+cmsRun runUCTToGTinterface_ntuple_minbias.py
+
+#### examples of calculating rates/turn-ons
+
+# in L1Analyzer/L1Analyzer/macros
+# - for rates: make_rates.C
+# - for turn-ons: plot_turnon.C
