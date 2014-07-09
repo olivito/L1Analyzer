@@ -159,6 +159,9 @@ private:
   int nBinMT2=1000;
   double maxMT2=1000;
 
+  int nBinNJets=10;
+  double maxNJets=10;
+
   int nBinPU = 60;
 
   unsigned int regionETCutForHT_;
@@ -249,8 +252,8 @@ void L1Analyzer::plot2D(std::string title, float xval, float yval, std::string t
     {
       TH2F* currentHisto= new TH2F(title.c_str(), title.c_str(), numbinsx, xmin, xmax, numbinsy, ymin, ymax);
       currentHisto->Fill(xval, yval, weight);
-      //      (*iter).second->GetXaxis()->SetTitle(titleX.c_str());
-      //      (*iter).second->GetYaxis()->SetTitle(titleY.c_str());
+      currentHisto->GetXaxis()->SetTitle(titleX.c_str());
+      currentHisto->GetYaxis()->SetTitle(titleY.c_str());
       allhistos.insert(std::pair<std::string, TH2F*> (title,currentHisto) );
     }
   else // exists already, so just fill it
@@ -412,9 +415,24 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   edm::Handle<reco::GenJetCollection> genJetsHandle;
   iEvent.getByLabel("ak5GenJets", genJetsHandle);
 
-  int ngenjets = 0;
-  int ngenjets_eta30 = 0;
-  int ngenjets_eta22 = 0;
+  int ngenjets_pt30 = 0;
+  int ngenjets_pt30_eta30 = 0;
+  int ngenjets_pt30_eta22 = 0;
+  int ngenjets_pt40 = 0;
+  int ngenjets_pt40_eta30 = 0;
+  int ngenjets_pt40_eta22 = 0;
+  int ngenjets_pt50 = 0;
+  int ngenjets_pt50_eta30 = 0;
+  int ngenjets_pt50_eta22 = 0;
+  int ngenjets_pt80 = 0;
+  int ngenjets_pt80_eta30 = 0;
+  int ngenjets_pt80_eta22 = 0;
+  int ngenjets_pt100 = 0;
+  int ngenjets_pt100_eta30 = 0;
+  int ngenjets_pt100_eta22 = 0;
+  double genHT30=0.;
+  double genHT30_eta30=0.;
+  double genHT30_eta22=0.;
   double genHT40=0.;
   double genHT40_eta30=0.;
   double genHT40_eta22=0.;
@@ -435,17 +453,38 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     // should apply some smearing to get jet pt to mock up reco..
     
-    if( genJetPt > 40.0 && std::abs(genJetEta)<4.7 ) {
-      ++ngenjets;
-      genHT40 += genJetPt;
+    if( genJetPt > 30.0 && std::abs(genJetEta)<4.7 ) {
+      ++ngenjets_pt30;
+      genHT30 += genJetPt;
+      if (genJetPt > 40.) {
+	++ngenjets_pt40;
+	genHT40 += genJetPt;
+      }
+      if (genJetPt > 50.) ++ngenjets_pt50;
+      if (genJetPt > 80.) ++ngenjets_pt80;
+      if (genJetPt > 100.) ++ngenjets_pt100;
     }
-    if( genJetPt > 40.0 && std::abs(genJetEta)<3.0 ) {
-      ++ngenjets_eta30;
-      genHT40_eta30 += genJetPt;
+    if( genJetPt > 30.0 && std::abs(genJetEta)<3.0 ) {
+      ++ngenjets_pt30_eta30;
+      genHT30_eta30 += genJetPt;
+      if (genJetPt > 40.) {
+	++ngenjets_pt40_eta30;
+	genHT40_eta30 += genJetPt;
+      }
+      if (genJetPt > 50.) ++ngenjets_pt50_eta30;
+      if (genJetPt > 80.) ++ngenjets_pt80_eta30;
+      if (genJetPt > 100.) ++ngenjets_pt100_eta30;
     }
-    if( genJetPt > 40.0 && std::abs(genJetEta)<2.172 ) {
-      ++ngenjets_eta22;
-      genHT40_eta22 += genJetPt;
+    if( genJetPt > 30.0 && std::abs(genJetEta)<2.172 ) {
+      ++ngenjets_pt30_eta22;
+      genHT30_eta22 += genJetPt;
+      if (genJetPt > 40.) {
+	++ngenjets_pt40_eta22;
+	genHT40_eta22 += genJetPt;
+      }
+      if (genJetPt > 50.) ++ngenjets_pt50_eta22;
+      if (genJetPt > 80.) ++ngenjets_pt80_eta22;
+      if (genJetPt > 100.) ++ngenjets_pt100_eta22;
     }
   }
 
@@ -453,9 +492,25 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   sort(genJetsCent30.begin(),genJetsCent30.end(),cmpPtLorentz());
   sort(genJetsCent22.begin(),genJetsCent22.end(),cmpPtLorentz());
   
-  plot1D("h_genNjets", ngenjets, 1, h_1d, 20, 0., 20);  
-  plot1D("h_genNjets_eta30", ngenjets_eta30, 1, h_1d, 20, 0., 20);  
-  plot1D("h_genNjets_eta22", ngenjets_eta22, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt30", ngenjets_pt30, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt30_eta30", ngenjets_pt30_eta30, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt30_eta22", ngenjets_pt30_eta22, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt40", ngenjets_pt40, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt40_eta30", ngenjets_pt40_eta30, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt40_eta22", ngenjets_pt40_eta22, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt50", ngenjets_pt50, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt50_eta30", ngenjets_pt50_eta30, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt50_eta22", ngenjets_pt50_eta22, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt80", ngenjets_pt80, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt80_eta30", ngenjets_pt80_eta30, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt80_eta22", ngenjets_pt80_eta22, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt100", ngenjets_pt100, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt100_eta30", ngenjets_pt100_eta30, 1, h_1d, 20, 0., 20);  
+  plot1D("h_ngenjets_pt100_eta22", ngenjets_pt100_eta22, 1, h_1d, 20, 0., 20);  
+
+  plot1D("h_genHT30", genHT30, 1, h_1d, nBinHt, 0., maxHt);  
+  plot1D("h_genHT30_eta30", genHT30_eta30, 1, h_1d, nBinHt, 0., maxHt);  
+  plot1D("h_genHT30_eta22", genHT30_eta22, 1, h_1d, nBinHt, 0., maxHt);  
   plot1D("h_genHT40", genHT40, 1, h_1d, nBinHt, 0., maxHt);  
   plot1D("h_genHT40_eta30", genHT40_eta30, 1, h_1d, nBinHt, 0., maxHt);  
   plot1D("h_genHT40_eta22", genHT40_eta22, 1, h_1d, nBinHt, 0., maxHt);  
@@ -543,14 +598,18 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   // calculate genMT2
   float genmt2_jeteta30 = CalcHemisphereAndMT2(0.,false,genJetsCent30,genMETvec);
-  float genmt2_jeteta30_meteta30 = CalcHemisphereAndMT2(0.,false,genJetsCent30,genMETvec_eta30);
+  //  float genmt2_jeteta30_meteta30 = CalcHemisphereAndMT2(0.,false,genJetsCent30,genMETvec_eta30);
   float genmt2_jeteta22 = CalcHemisphereAndMT2(0.,false,genJetsCent22,genMETvec);
-  float genmt2_jeteta22_meteta30 = CalcHemisphereAndMT2(0.,false,genJetsCent22,genMETvec_eta30);
+  //  float genmt2_jeteta22_meteta30 = CalcHemisphereAndMT2(0.,false,genJetsCent22,genMETvec_eta30);
 
   plot1D("h_genmt2_jeteta30", genmt2_jeteta30, weight, h_1d, nBinMT2, 0., maxMT2);
-  plot1D("h_genmt2_jeteta30_meteta30", genmt2_jeteta30_meteta30, weight, h_1d, nBinMT2, 0., maxMT2);
+  //  plot1D("h_genmt2_jeteta30_meteta30", genmt2_jeteta30_meteta30, weight, h_1d, nBinMT2, 0., maxMT2);
+  plot2D("h_genjet12_dphi_vs_genmt2_jeteta30", genmt2_jeteta30, dphi_genjet12_eta30, "Gen M_{T2} [GeV]", "Gen #Delta#phi(j1,j2)", weight, h_2d, nBinMT2, 0., maxMT2, 100, -3.5, 3.5);
+
   plot1D("h_genmt2_jeteta22", genmt2_jeteta22, weight, h_1d, nBinMT2, 0., maxMT2);
-  plot1D("h_genmt2_jeteta22_meteta30", genmt2_jeteta22_meteta30, weight, h_1d, nBinMT2, 0., maxMT2);
+  //  plot1D("h_genmt2_jeteta22_meteta30", genmt2_jeteta22_meteta30, weight, h_1d, nBinMT2, 0., maxMT2);
+  plot2D("h_genjet12_dphi_vs_genmt2_jeteta22", genmt2_jeteta22, dphi_genjet12_eta22, "Gen M_{T2} [GeV]", "Gen #Delta#phi(j1,j2)", weight, h_2d, nBinMT2, 0., maxMT2, 100, -3.5, 3.5);
+
 
 
   // //
@@ -626,6 +685,22 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   std::vector<LorentzVector> newJets2015Cent30;
   std::vector<LorentzVector> newJets2015Cent22;
 
+  int njets_pt30 = 0;
+  int njets_pt30_eta30 = 0;
+  int njets_pt30_eta22 = 0;
+  int njets_pt40 = 0;
+  int njets_pt40_eta30 = 0;
+  int njets_pt40_eta22 = 0;
+  int njets_pt50 = 0;
+  int njets_pt50_eta30 = 0;
+  int njets_pt50_eta22 = 0;
+  int njets_pt80 = 0;
+  int njets_pt80_eta30 = 0;
+  int njets_pt80_eta22 = 0;
+  int njets_pt100 = 0;
+  int njets_pt100_eta30 = 0;
+  int njets_pt100_eta22 = 0;
+
   if ( L1JetsCent2015Handle.isValid() ) {
     for (std::vector<L1JetParticle>::const_iterator jetIter = L1JetsCent2015Handle -> begin(); jetIter != L1JetsCent2015Handle->end(); ++jetIter) {
       float et = jetIter -> pt();
@@ -643,8 +718,27 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       plot1D("h_jets_phibin", phibin, weight, h_1d, PHIBINS, 0., PHIBINS);
 
       newJets2015.push_back(jetIter->p4());
-      if (fabs(eta) < 3.0) newJets2015Cent30.push_back(jetIter->p4());
-      if (fabs(eta) < 2.172) newJets2015Cent22.push_back(jetIter->p4());
+      if (et > 30.) ++njets_pt30;
+      if (et > 40.) ++njets_pt40;
+      if (et > 50.) ++njets_pt50;
+      if (et > 80.) ++njets_pt80;
+      if (et > 100.) ++njets_pt100;
+      if (fabs(eta) < 3.0) {
+	newJets2015Cent30.push_back(jetIter->p4());
+	if (et > 30.) ++njets_pt30_eta30;
+	if (et > 40.) ++njets_pt40_eta30;
+	if (et > 50.) ++njets_pt50_eta30;
+	if (et > 80.) ++njets_pt80_eta30;
+	if (et > 100.) ++njets_pt100_eta30;
+      }
+      if (fabs(eta) < 2.172) {
+	newJets2015Cent22.push_back(jetIter->p4());
+ 	if (et > 30.) ++njets_pt30_eta22;
+	if (et > 40.) ++njets_pt40_eta22;
+	if (et > 50.) ++njets_pt50_eta22;
+	if (et > 80.) ++njets_pt80_eta22;
+	if (et > 100.) ++njets_pt100_eta22;
+      }
 
     }
   }
@@ -668,12 +762,48 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       // combine with central jets
       newJets2015.push_back(jetIter->p4());
+      if (et > 30.) ++njets_pt30;
+      if (et > 40.) ++njets_pt40;
+      if (et > 50.) ++njets_pt50;
     }
   }
 
   sort(newJets2015.begin(),newJets2015.end(),cmpPtLorentz());
   sort(newJets2015Cent30.begin(),newJets2015Cent30.end(),cmpPtLorentz());
   sort(newJets2015Cent22.begin(),newJets2015Cent22.end(),cmpPtLorentz());
+
+  plot1D("h_njets_pt30", njets_pt30, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt30_eta30", njets_pt30_eta30, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt30_eta22", njets_pt30_eta22, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt40", njets_pt40, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt40_eta30", njets_pt40_eta30, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt40_eta22", njets_pt40_eta22, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt50", njets_pt50, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt50_eta30", njets_pt50_eta30, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt50_eta22", njets_pt50_eta22, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt80", njets_pt80, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt80_eta30", njets_pt80_eta30, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt80_eta22", njets_pt80_eta22, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt100", njets_pt100, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt100_eta30", njets_pt100_eta30, 1, h_1d, 20, 0., 20);  
+  plot1D("h_njets_pt100_eta22", njets_pt100_eta22, 1, h_1d, 20, 0., 20);  
+
+  plot2D("h_njets_pt30_vs_ngenjets_pt30", ngenjets_pt30, njets_pt30, "N(gen jets, pt30)", "N(L1 jets, pt30)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt30_eta30_vs_ngenjets_pt30_eta30", ngenjets_pt30_eta30, njets_pt30_eta30, "N(gen jets, pt30)", "N(L1 jets, pt30)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt30_eta22_vs_ngenjets_pt30_eta22", ngenjets_pt30_eta22, njets_pt30_eta22, "N(gen jets, pt30)", "N(L1 jets, pt30)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt40_vs_ngenjets_pt40", ngenjets_pt40, njets_pt40, "N(gen jets, pt40)", "N(L1 jets, pt40)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt40_eta30_vs_ngenjets_pt40_eta30", ngenjets_pt40_eta30, njets_pt40_eta30, "N(gen jets, pt40)", "N(L1 jets, pt40)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt40_eta22_vs_ngenjets_pt40_eta22", ngenjets_pt40_eta22, njets_pt40_eta22, "N(gen jets, pt40)", "N(L1 jets, pt40)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt50_vs_ngenjets_pt50", ngenjets_pt50, njets_pt50, "N(gen jets, pt50)", "N(L1 jets, pt50)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt50_eta30_vs_ngenjets_pt50_eta30", ngenjets_pt50_eta30, njets_pt50_eta30, "N(gen jets, pt50)", "N(L1 jets, pt50)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt50_eta22_vs_ngenjets_pt50_eta22", ngenjets_pt50_eta22, njets_pt50_eta22, "N(gen jets, pt50)", "N(L1 jets, pt50)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt80_vs_ngenjets_pt80", ngenjets_pt80, njets_pt80, "N(gen jets, pt80)", "N(L1 jets, pt80)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt80_eta30_vs_ngenjets_pt80_eta30", ngenjets_pt80_eta30, njets_pt80_eta30, "N(gen jets, pt80)", "N(L1 jets, pt80)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt80_eta22_vs_ngenjets_pt80_eta22", ngenjets_pt80_eta22, njets_pt80_eta22, "N(gen jets, pt80)", "N(L1 jets, pt80)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt100_vs_ngenjets_pt100", ngenjets_pt100, njets_pt100, "N(gen jets, pt100)", "N(L1 jets, pt100)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt100_eta30_vs_ngenjets_pt100_eta30", ngenjets_pt100_eta30, njets_pt100_eta30, "N(gen jets, pt100)", "N(L1 jets, pt100)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+  plot2D("h_njets_pt100_eta22_vs_ngenjets_pt100_eta22", ngenjets_pt100_eta22, njets_pt100_eta22, "N(gen jets, pt100)", "N(L1 jets, pt100)", weight, h_2d, nBinNJets,0.,maxNJets,nBinNJets,0.,maxNJets);
+
 
   std::vector<int> jetThresholds;
   jetThresholds.push_back(40);
@@ -740,6 +870,26 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   makeTurnOn(pt_genjet3_eta30, "genjet3_pt_eta30", pt_jet3_eta30, "jet3_pt_eta30", jetThresholds, weight, nBinJetPt, maxJetPt);
   makeTurnOn(pt_genjet4_eta30, "genjet4_pt_eta30", pt_jet4_eta30, "jet4_pt_eta30", jetThresholds, weight, nBinJetPt, maxJetPt);
 
+  // turn-ons with gen mt2 cut
+  if (genmt2_jeteta30 > 100.) {
+    makeTurnOn(pt_genjet1_eta30, "genjet1_pt_eta30_genmt2_jeteta30_cut100", pt_jet1_eta30, "jet1_pt_eta30", jetThresholds, weight, nBinJetPt, maxJetPt);
+    makeTurnOn(pt_genjet2_eta30, "genjet2_pt_eta30_genmt2_jeteta30_cut100", pt_jet2_eta30, "jet2_pt_eta30", jetThresholds, weight, nBinJetPt, maxJetPt);
+    if (fabs(dphi_jet12_eta30) < 3.0) makeTurnOn(pt_genjet2_eta30, "genjet2_pt_eta30_genmt2_jeteta30_cut100", pt_jet2_eta30, "jet2_pt_eta30_dphiL", jetThresholds, weight, nBinJetPt, maxJetPt);
+    if (fabs(dphi_jet12_eta30) < 2.6) makeTurnOn(pt_genjet2_eta30, "genjet2_pt_eta30_genmt2_jeteta30_cut100", pt_jet2_eta30, "jet2_pt_eta30_dphiT", jetThresholds, weight, nBinJetPt, maxJetPt);
+    makeTurnOn(pt_genjet3_eta30, "genjet3_pt_eta30_genmt2_jeteta30_cut100", pt_jet3_eta30, "jet3_pt_eta30", jetThresholds, weight, nBinJetPt, maxJetPt);
+    makeTurnOn(pt_genjet4_eta30, "genjet4_pt_eta30_genmt2_jeteta30_cut100", pt_jet4_eta30, "jet4_pt_eta30", jetThresholds, weight, nBinJetPt, maxJetPt);
+  }
+  if (genmt2_jeteta30 > 200.) {
+    makeTurnOn(pt_genjet1_eta30, "genjet1_pt_eta30_genmt2_jeteta30_cut200", pt_jet1_eta30, "jet1_pt_eta30", jetThresholds, weight, nBinJetPt, maxJetPt);
+    makeTurnOn(pt_genjet2_eta30, "genjet2_pt_eta30_genmt2_jeteta30_cut200", pt_jet2_eta30, "jet2_pt_eta30", jetThresholds, weight, nBinJetPt, maxJetPt);
+    if (fabs(dphi_jet12_eta30) < 3.0) makeTurnOn(pt_genjet2_eta30, "genjet2_pt_eta30_genmt2_jeteta30_cut200", pt_jet2_eta30, "jet2_pt_eta30_dphiL", jetThresholds, weight, nBinJetPt, maxJetPt);
+    if (fabs(dphi_jet12_eta30) < 2.6) makeTurnOn(pt_genjet2_eta30, "genjet2_pt_eta30_genmt2_jeteta30_cut200", pt_jet2_eta30, "jet2_pt_eta30_dphiT", jetThresholds, weight, nBinJetPt, maxJetPt);
+    makeTurnOn(pt_genjet3_eta30, "genjet3_pt_eta30_genmt2_jeteta30_cut200", pt_jet3_eta30, "jet3_pt_eta30", jetThresholds, weight, nBinJetPt, maxJetPt);
+    makeTurnOn(pt_genjet4_eta30, "genjet4_pt_eta30_genmt2_jeteta30_cut200", pt_jet4_eta30, "jet4_pt_eta30", jetThresholds, weight, nBinJetPt, maxJetPt);
+  }
+
+
+
   float pt_jet1_eta22 = 0.;
   float pt_jet2_eta22 = 0.;
   float pt_jet3_eta22 = 0.;
@@ -767,6 +917,25 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   if (fabs(dphi_jet12_eta22) < 2.6) makeTurnOn(pt_genjet2_eta22, "genjet2_pt_eta22", pt_jet2_eta22, "jet2_pt_eta22_dphiT", jetThresholds, weight, nBinJetPt, maxJetPt);
   makeTurnOn(pt_genjet3_eta22, "genjet3_pt_eta22", pt_jet3_eta22, "jet3_pt_eta22", jetThresholds, weight, nBinJetPt, maxJetPt);
   makeTurnOn(pt_genjet4_eta22, "genjet4_pt_eta22", pt_jet4_eta22, "jet4_pt_eta22", jetThresholds, weight, nBinJetPt, maxJetPt);
+
+  // turn-ons with gen mt2 cut
+  if (genmt2_jeteta22 > 100.) {
+    makeTurnOn(pt_genjet1_eta22, "genjet1_pt_eta22_genmt2_jeteta22_cut100", pt_jet1_eta22, "jet1_pt_eta22", jetThresholds, weight, nBinJetPt, maxJetPt);
+    makeTurnOn(pt_genjet2_eta22, "genjet2_pt_eta22_genmt2_jeteta22_cut100", pt_jet2_eta22, "jet2_pt_eta22", jetThresholds, weight, nBinJetPt, maxJetPt);
+    if (fabs(dphi_jet12_eta22) < 3.0) makeTurnOn(pt_genjet2_eta22, "genjet2_pt_eta22_genmt2_jeteta22_cut100", pt_jet2_eta22, "jet2_pt_eta22_dphiL", jetThresholds, weight, nBinJetPt, maxJetPt);
+    if (fabs(dphi_jet12_eta22) < 2.6) makeTurnOn(pt_genjet2_eta22, "genjet2_pt_eta22_genmt2_jeteta22_cut100", pt_jet2_eta22, "jet2_pt_eta22_dphiT", jetThresholds, weight, nBinJetPt, maxJetPt);
+    makeTurnOn(pt_genjet3_eta22, "genjet3_pt_eta22_genmt2_jeteta22_cut100", pt_jet3_eta22, "jet3_pt_eta22", jetThresholds, weight, nBinJetPt, maxJetPt);
+    makeTurnOn(pt_genjet4_eta22, "genjet4_pt_eta22_genmt2_jeteta22_cut100", pt_jet4_eta22, "jet4_pt_eta22", jetThresholds, weight, nBinJetPt, maxJetPt);
+  }
+  if (genmt2_jeteta22 > 200.) {
+    makeTurnOn(pt_genjet1_eta22, "genjet1_pt_eta22_genmt2_jeteta22_cut200", pt_jet1_eta22, "jet1_pt_eta22", jetThresholds, weight, nBinJetPt, maxJetPt);
+    makeTurnOn(pt_genjet2_eta22, "genjet2_pt_eta22_genmt2_jeteta22_cut200", pt_jet2_eta22, "jet2_pt_eta22", jetThresholds, weight, nBinJetPt, maxJetPt);
+    if (fabs(dphi_jet12_eta22) < 3.0) makeTurnOn(pt_genjet2_eta22, "genjet2_pt_eta22_genmt2_jeteta22_cut200", pt_jet2_eta22, "jet2_pt_eta22_dphiL", jetThresholds, weight, nBinJetPt, maxJetPt);
+    if (fabs(dphi_jet12_eta22) < 2.6) makeTurnOn(pt_genjet2_eta22, "genjet2_pt_eta22_genmt2_jeteta22_cut200", pt_jet2_eta22, "jet2_pt_eta22_dphiT", jetThresholds, weight, nBinJetPt, maxJetPt);
+    makeTurnOn(pt_genjet3_eta22, "genjet3_pt_eta22_genmt2_jeteta22_cut200", pt_jet3_eta22, "jet3_pt_eta22", jetThresholds, weight, nBinJetPt, maxJetPt);
+    makeTurnOn(pt_genjet4_eta22, "genjet4_pt_eta22_genmt2_jeteta22_cut200", pt_jet4_eta22, "jet4_pt_eta22", jetThresholds, weight, nBinJetPt, maxJetPt);
+  }
+
 
   //
   // ----------------------------------------------------------------------
@@ -929,6 +1098,54 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
   }
 
+  // HT thresholds for turn-ons
+  std::vector<int> htThresholds;
+  htThresholds.push_back(110);
+  htThresholds.push_back(125);
+  htThresholds.push_back(150);
+  htThresholds.push_back(175);
+  htThresholds.push_back(200);
+  htThresholds.push_back(225);
+
+  // HT plots and turn on curves
+  makeTurnOn(genHT40_eta30, "genHT40_eta30", HT_reget7, "HT_reget7", htThresholds, weight, nBinHt, maxHt);
+  makeTurnOn(genHT40_eta30, "genHT40_eta30", HT_reget10, "HT_reget10", htThresholds, weight, nBinHt, maxHt);
+  makeTurnOn(genHT40_eta30, "genHT40_eta30", HT_reget15, "HT_reget15", htThresholds, weight, nBinHt, maxHt);
+  makeTurnOn(genHT40_eta30, "genHT40_eta30", HT_reget20, "HT_reget20", htThresholds, weight, nBinHt, maxHt);
+
+  if (genmt2_jeteta30 > 100.) {
+    makeTurnOn(genHT40_eta30, "genHT40_eta30_genmt2_jeteta30_cut100", HT_reget7, "HT_reget7", htThresholds, weight, nBinHt, maxHt);
+    makeTurnOn(genHT40_eta30, "genHT40_eta30_genmt2_jeteta30_cut100", HT_reget10, "HT_reget10", htThresholds, weight, nBinHt, maxHt);
+    makeTurnOn(genHT40_eta30, "genHT40_eta30_genmt2_jeteta30_cut100", HT_reget15, "HT_reget15", htThresholds, weight, nBinHt, maxHt);
+    makeTurnOn(genHT40_eta30, "genHT40_eta30_genmt2_jeteta30_cut100", HT_reget20, "HT_reget20", htThresholds, weight, nBinHt, maxHt);
+  }
+  if (genmt2_jeteta30 > 200.) {
+    makeTurnOn(genHT40_eta30, "genHT40_eta30_genmt2_jeteta30_cut200", HT_reget7, "HT_reget7", htThresholds, weight, nBinHt, maxHt);
+    makeTurnOn(genHT40_eta30, "genHT40_eta30_genmt2_jeteta30_cut200", HT_reget10, "HT_reget10", htThresholds, weight, nBinHt, maxHt);
+    makeTurnOn(genHT40_eta30, "genHT40_eta30_genmt2_jeteta30_cut200", HT_reget15, "HT_reget15", htThresholds, weight, nBinHt, maxHt);
+    makeTurnOn(genHT40_eta30, "genHT40_eta30_genmt2_jeteta30_cut200", HT_reget20, "HT_reget20", htThresholds, weight, nBinHt, maxHt);
+  }
+
+
+  makeTurnOn(genHT40_eta22, "genHT40_eta22", HT_eta22_reget7, "HT_eta22_reget7", htThresholds, weight, nBinHt, maxHt);
+  makeTurnOn(genHT40_eta22, "genHT40_eta22", HT_eta22_reget10, "HT_eta22_reget10", htThresholds, weight, nBinHt, maxHt);
+  makeTurnOn(genHT40_eta22, "genHT40_eta22", HT_eta22_reget15, "HT_eta22_reget15", htThresholds, weight, nBinHt, maxHt);
+  makeTurnOn(genHT40_eta22, "genHT40_eta22", HT_eta22_reget20, "HT_eta22_reget20", htThresholds, weight, nBinHt, maxHt);
+
+  if (genmt2_jeteta22 > 100.) {
+    makeTurnOn(genHT40_eta22, "genHT40_eta22_genmt2_jeteta22_cut100", HT_eta22_reget7, "HT_eta22_reget7", htThresholds, weight, nBinHt, maxHt);
+    makeTurnOn(genHT40_eta22, "genHT40_eta22_genmt2_jeteta22_cut100", HT_eta22_reget10, "HT_eta22_reget10", htThresholds, weight, nBinHt, maxHt);
+    makeTurnOn(genHT40_eta22, "genHT40_eta22_genmt2_jeteta22_cut100", HT_eta22_reget15, "HT_eta22_reget15", htThresholds, weight, nBinHt, maxHt);
+    makeTurnOn(genHT40_eta22, "genHT40_eta22_genmt2_jeteta22_cut100", HT_eta22_reget20, "HT_eta22_reget20", htThresholds, weight, nBinHt, maxHt);
+  }
+  if (genmt2_jeteta22 > 200.) {
+    makeTurnOn(genHT40_eta22, "genHT40_eta22_genmt2_jeteta22_cut200", HT_eta22_reget7, "HT_eta22_reget7", htThresholds, weight, nBinHt, maxHt);
+    makeTurnOn(genHT40_eta22, "genHT40_eta22_genmt2_jeteta22_cut200", HT_eta22_reget10, "HT_eta22_reget10", htThresholds, weight, nBinHt, maxHt);
+    makeTurnOn(genHT40_eta22, "genHT40_eta22_genmt2_jeteta22_cut200", HT_eta22_reget15, "HT_eta22_reget15", htThresholds, weight, nBinHt, maxHt);
+    makeTurnOn(genHT40_eta22, "genHT40_eta22_genmt2_jeteta22_cut200", HT_eta22_reget20, "HT_eta22_reget20", htThresholds, weight, nBinHt, maxHt);
+  }
+
+
 }
 
 
@@ -1005,7 +1222,7 @@ float L1Analyzer::deltaR_normal(float eta1, float phi1, float eta2, float phi2) 
 // calculate hemispheres and input them to MT2 calc
 Float_t L1Analyzer::CalcHemisphereAndMT2(float testmass, bool massive, std::vector<LorentzVector> jets, LorentzVector MET ) {
 
-  std::cout << "-- debug for MT2 calculation:" << std::endl;
+  if (doDebug) std::cout << "-- debug for MT2 calculation:" << std::endl;
 
   // fill Pseudojets with selected objects
   vector<float> px, py, pz, E;
@@ -1014,7 +1231,7 @@ Float_t L1Analyzer::CalcHemisphereAndMT2(float testmass, bool massive, std::vect
     py.push_back(jets[ijet].Py());
     pz.push_back(jets[ijet].Pz());
     E .push_back(jets[ijet].E ());
-    std::cout << "  - jet: pt: " << jets[ijet].pt() << ", phi: " << jets[ijet].phi() << std::endl;
+    if (doDebug) std::cout << "  - jet: pt: " << jets[ijet].pt() << ", phi: " << jets[ijet].phi() << std::endl;
   }
   if (px.size()<2) return -999.99;
 
@@ -1044,8 +1261,8 @@ Float_t L1Analyzer::CalcHemisphereAndMT2(float testmass, bool massive, std::vect
   }
   //  delete hemisp;
 
-  std::cout << "  - pseudojet1: pt: " << pseudojet1.pt() << ", phi: " << pseudojet1.phi() << std::endl;
-  std::cout << "  - pseudojet2: pt: " << pseudojet2.pt() << ", phi: " << pseudojet2.phi() << std::endl;
+  if (doDebug) std::cout << "  - pseudojet1: pt: " << pseudojet1.pt() << ", phi: " << pseudojet1.phi() << std::endl;
+  if (doDebug) std::cout << "  - pseudojet2: pt: " << pseudojet2.pt() << ", phi: " << pseudojet2.phi() << std::endl;
 
   return CalcMT2(testmass, massive, pseudojet1, pseudojet2, MET);
 
@@ -1083,7 +1300,7 @@ Float_t L1Analyzer::CalcMT2(float testmass, bool massive, LorentzVector visible1
   mt2.set_mn(testmass);
   Float_t MT2=mt2.get_mt2();
 
-  std::cout << "  - MT2 value: " << MT2 << std::endl;
+  if (doDebug) std::cout << "  - MT2 value: " << MT2 << std::endl;
   return MT2;
 }
 
