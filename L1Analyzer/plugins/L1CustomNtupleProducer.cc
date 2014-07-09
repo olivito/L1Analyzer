@@ -382,7 +382,7 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
 
       //    if ((abs(genp->pdgId()) == 11 || abs(genp->pdgId()) == 12 || abs(genp->pdgId()) == 13 || abs(genp->pdgId()) == 14 || abs(genp->pdgId()) == 15 || abs(genp->pdgId()) == 16 ) && genp->status() == 23) nGenLep++;
 
-      if ((genp->status() == 23) && (abs(genp->pdgId()) == 11 || abs(genp->pdgId()) == 13 || abs(genp->pdgId()) == 15)) (*ngenlep)++;
+      if ((genp->status() == 3 || genp->status() == 23) && (abs(genp->pdgId()) == 11 || abs(genp->pdgId()) == 13 || abs(genp->pdgId()) == 15)) (*ngenlep)++;
 
       if((abs(genp->pdgId()) == 1000022) && (genp->status() == 1)) {
 	lsps.push_back(genp->p4());

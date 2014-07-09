@@ -354,7 +354,7 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     //    if ((abs(genp->pdgId()) == 11 || abs(genp->pdgId()) == 12 || abs(genp->pdgId()) == 13 || abs(genp->pdgId()) == 14 || abs(genp->pdgId()) == 15 || abs(genp->pdgId()) == 16 ) && genp->status() == 23) nGenLep++;
 
-    if ((genp->status() == 23) && (abs(genp->pdgId()) == 11 || abs(genp->pdgId()) == 13 || abs(genp->pdgId()) == 15)) nGenLep++;
+    if ((genp->status() == 3 || genp->status() == 23) && (abs(genp->pdgId()) == 11 || abs(genp->pdgId()) == 13 || abs(genp->pdgId()) == 15)) nGenLep++;
 
     if((abs(genp->pdgId()) == 1000022) && (genp->status() == 1)) {
       lsps.push_back(genp->p4());
