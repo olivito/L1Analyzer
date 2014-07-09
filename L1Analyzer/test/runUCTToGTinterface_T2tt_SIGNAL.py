@@ -31,26 +31,36 @@ secFiles = cms.untracked.vstring()
 ##process.source = cms.Source("PoolSource",                                                                                                                                   
 process.source = cms.Source ("PoolSource",fileNames = readFiles, secondaryFileNames = secFiles,skipEvents = cms.untracked.uint32(0))
 
-#from input_800_100 import input_files
-#signal_model = 'T2tt'
-#signal_point = '800_100'
+from input_T2tt_800_100 import input_files
+signal_model = 'T2tt'
+signal_point = '800_100'
 
 #from input_500_250 import input_files
 #signal_model = 'T2tt'
 #signal_point = '500_250'
 
-from input_T2qq_600_100 import input_files
-signal_model = 'T2qq'
-signal_point = '600_100'
+#from input_T2qq_600_100 import input_files
+#signal_model = 'T2qq'
+#signal_point = '600_100'
+
+#from input_T2qq_450_400 import input_files
+#signal_model = 'T2qq'
+#signal_point = '450_400'
+
+#from input_T2qq_400_150 import input_files
+#signal_model = 'T2qq'
+#signal_point = '400_150'
 
 readFiles.extend( input_files )
+
+#readFiles.extend( ['file:/home/users/olivito/l1trig/CMSSW_7_1_0_pre8/src/L1Analyzer/L1Analyzer/test/T2qq_600_100_Fall13_event1050_step1.root'] )
 
 
 # Make the framework shut up.
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 100
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 ######
 ######
@@ -123,7 +133,7 @@ process.ana = cms.EDAnalyzer( 'L1Analyzer' ,
                               minGctEtaForSums = process.UCT2015Producer.minGctEtaForSums,
                               maxGctEtaForSums = process.UCT2015Producer.maxGctEtaForSums,
                               ###
-                              histoname = cms.string("histos_%s_%s_debug_genjets.root"%(signal_model,signal_point))
+                              histoname = cms.string("histos_%s_%s_turnons_all.root"%(signal_model,signal_point))
 ###                              histoname = cms.string("T2tt_800_100_noPU_histos.root")
 ###                              histoname = cms.string("T2tt_800_100_seed5_histos.root")
                               )

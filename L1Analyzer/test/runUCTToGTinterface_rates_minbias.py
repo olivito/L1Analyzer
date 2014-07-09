@@ -25,6 +25,7 @@ process.source = cms.Source ("PoolSource",fileNames = readFiles, secondaryFileNa
 
 readFiles.extend( [
 "file:/hadoop/cms/store/user/olivito/Neutrino_Pt-2to20_gun/L1Trig_saveRegsTPs/01c5ccb61a90a376764306e94cf36814/output_90_3_UQN.root",
+#"file:/hadoop/cms/store/user/olivito/DYJetsToLL_M-50_13TeV-madgraph-pythia8/L1Trig_Flat20to50_bx25_saveRegsTPs_oldGT/e8988c01989bba6871868d8dd7ab7e67/output_34_1_17g.root",
 ] )
 
 print readFiles
@@ -55,7 +56,8 @@ process.GlobalTag.globaltag = 'POSTLS162_V2::All'
 ## 62X samples, 50ns
 #process.GlobalTag.globaltag = 'POSTLS162_V1::All'
 ## 70X samples, 25ns flat PU, running in 710pre8 or higher
-#process.GlobalTag.globaltag = 'PRE_LS171V9A::All'
+#process.GlobalTag.globaltag = 'PRE_LS171V9A::All' ### potentially bad
+#process.GlobalTag.globaltag = 'POSTLS170_V5::All'
 
 # Load emulation and RECO sequences
 isMC = True
@@ -123,10 +125,12 @@ process.ana = cms.EDAnalyzer( 'L1RateAnalyzer' ,
                               HcalTriggerPrimitiveInputTag = cms.InputTag("hackHCALMIPs"),
                               L1JetsCentInputTag = cms.InputTag("l1extraParticles","Central","ReRunningL1"),
                               L1JetsFwdInputTag = cms.InputTag("l1extraParticles","Forward","ReRunningL1"),
+                              L1EtMissInputTag = cms.InputTag("l1extraParticles","MET","ReRunningL1"),
                               L1MHTInputTag = cms.InputTag("l1extraParticles","MHT"),
                               ###
                               L1JetsCent2015InputTag = cms.InputTag("l1extraParticlesUCT","Central","RateAnalysis"),
                               L1JetsFwd2015InputTag = cms.InputTag("l1extraParticlesUCT","Forward","RateAnalysis"),
+                              L1EtMiss2015InputTag = cms.InputTag("l1extraParticlesUCT","MET","RateAnalysis"),
                               L1MHT2015InputTag = cms.InputTag("l1extraParticlesUCT","MHT","RateAnalysis"),
                               Regions2015InputTag = cms.InputTag("uctDigis","","ReRunningL1"),
                               CorRegions2015InputTag = cms.InputTag("CorrectedDigis","CorrectedRegions","RateAnalysis"),
@@ -144,7 +148,7 @@ process.ana = cms.EDAnalyzer( 'L1RateAnalyzer' ,
                               doPUPlots = cms.bool(True),
                               doTPPlots = cms.bool(True),
                               applyGenWeights = cms.bool(False),
-                              histoname = cms.string("minbias_histos_rate_pu40bx25_1gevbins.root")
+                              histoname = cms.string("histos_minbias_rate_pu40bx25_mettest.root")
 ###                              histoname = cms.string("T2tt_800_100_noPU_histos.root")
 ###                              histoname = cms.string("T2tt_800_100_seed5_histos.root")
                               )
