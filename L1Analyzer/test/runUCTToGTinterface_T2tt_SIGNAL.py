@@ -80,6 +80,14 @@ else:
 # Load sequences
 process.load("Configuration.Geometry.GeometryIdeal_cff")
 process.load("L1Trigger.UCT2015.uctl1extraparticles_cfi")
+process.load('RecoJets.Configuration.GenJetParticles_cff')
+process.load('RecoJets.Configuration.RecoGenJets_cff')
+
+process.antiktGenJets = cms.Path(
+    process.genParticlesForJetsNoNu*
+    process.ak4GenJetsNoNu*
+    process.genParticlesForJetsNoMuNoNu*
+    process.ak4GenJetsNoMuNoNu)
 
 ###process.CorrectedDigis.puMultCorrect = cms.bool(False) # regions with PU corrections
 ###process.UCT2015Producer.puMultCorrect = cms.bool(False) # this would do the same trick, applying both to make sure
@@ -122,6 +130,8 @@ process.ana = cms.EDAnalyzer( 'L1Analyzer' ,
                               L1MHT2015InputTag = cms.InputTag("l1extraParticlesUCT","MHT","ReRunningL1"),
                               Regions2015InputTag = cms.InputTag("uctDigis","","ReRunningL1"),
                               CorRegions2015InputTag = cms.InputTag("CorrectedDigis","CorrectedRegions","ReRunningL1"),
+                              ###
+                              GenJetsInputTag = cms.InputTag("ak4GenJetsNoNu"),
                               ###
                               PUSummaryInfoInputTag = cms.InputTag("addPileupInfo"),
                               ###

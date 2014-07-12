@@ -145,6 +145,8 @@ private:
   edm::InputTag Regions2015InputTag;
   edm::InputTag CorRegions2015InputTag;
 
+  edm::InputTag GenJetsInputTag;
+
   edm::InputTag PUSummaryInfoInputTag;
 
   int nBinHt=2000;
@@ -200,6 +202,8 @@ L1Analyzer::L1Analyzer(const edm::ParameterSet& iConfig)
   L1MHT2015InputTag= iConfig.getParameter<edm::InputTag>("L1MHT2015InputTag");
   Regions2015InputTag= iConfig.getParameter<edm::InputTag>("Regions2015InputTag");
   CorRegions2015InputTag= iConfig.getParameter<edm::InputTag>("CorRegions2015InputTag");
+  //
+  GenJetsInputTag = iConfig.getParameter<edm::InputTag>("GenJetsInputTag");
   //
   PUSummaryInfoInputTag = iConfig.getParameter<edm::InputTag>("PUSummaryInfoInputTag");
 
@@ -413,7 +417,7 @@ L1Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   //
 
   edm::Handle<reco::GenJetCollection> genJetsHandle;
-  iEvent.getByLabel("ak5GenJets", genJetsHandle);
+  iEvent.getByLabel(GenJetsInputTag, genJetsHandle);
 
   int ngenjets_pt30 = 0;
   int ngenjets_pt30_eta30 = 0;
