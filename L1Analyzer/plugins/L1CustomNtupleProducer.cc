@@ -139,6 +139,8 @@ private:
   edm::InputTag Regions2015InputTag;
   edm::InputTag CorRegions2015InputTag;
 
+  edm::InputTag GenJetsInputTag;
+
   edm::InputTag PUSummaryInfoInputTag;
 
   bool doGenKinematics_;
@@ -177,6 +179,8 @@ L1CustomNtupleProducer::L1CustomNtupleProducer(const edm::ParameterSet& iConfig)
   L1MHT2015InputTag= iConfig.getParameter<edm::InputTag>("L1MHT2015InputTag");
   Regions2015InputTag= iConfig.getParameter<edm::InputTag>("Regions2015InputTag");
   CorRegions2015InputTag= iConfig.getParameter<edm::InputTag>("CorRegions2015InputTag");
+  //
+  GenJetsInputTag = iConfig.getParameter<edm::InputTag>("GenJetsInputTag");
   //
   PUSummaryInfoInputTag = iConfig.getParameter<edm::InputTag>("PUSummaryInfoInputTag");
 
@@ -420,7 +424,7 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
     //
 
     edm::Handle<reco::GenJetCollection> genJetsHandle;
-    iEvent.getByLabel("ak5GenJets", genJetsHandle);
+    iEvent.getByLabel(GenJetsInputTag, genJetsHandle);
 
     *genhtEta30 = 0.;
     *genhtEta22 = 0.;

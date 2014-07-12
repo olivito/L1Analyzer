@@ -23,9 +23,13 @@ process.source = cms.Source ("PoolSource",fileNames = readFiles, secondaryFileNa
 #"file:/hadoop/cms/store/user/olivito/DYJetsToLL_M-50_13TeV-madgraph-pythia8/L1Trig_Flat20to50_bx25_saveRegsTPs_oldGT/e8988c01989bba6871868d8dd7ab7e67/output_34_1_17g.root",
 #] )
 
-from input_T2tt_800_100 import input_files
-signal_model = 'T2tt'
-signal_point = '800_100'
+#from input_T2tt_800_100 import input_files
+#signal_model = 'T2tt'
+#signal_point = '800_100'
+
+#from input_T2tt_500_250 import input_files
+#signal_model = 'T2tt'
+#signal_point = '500_250'
 
 #from input_T2qq_600_100 import input_files
 #signal_model = 'T2qq'
@@ -39,6 +43,15 @@ signal_point = '800_100'
 #signal_model = 'T2qq'
 #signal_point = '400_150'
 
+from input_T1tttt_1025_625 import input_files
+signal_model = 'T1tttt'
+signal_point = '1025_625'
+
+#from input_T1tttt_825_525 import input_files
+#signal_model = 'T1tttt'
+#signal_point = '825_525'
+
+
 readFiles.extend( input_files )
 
 print readFiles
@@ -47,7 +60,7 @@ print readFiles
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 10000
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 ######
 ######
@@ -74,6 +87,14 @@ else:
 # Load sequences
 process.load("Configuration.Geometry.GeometryIdeal_cff")
 process.load("L1Trigger.UCT2015.uctl1extraparticles_cfi")
+process.load('RecoJets.Configuration.GenJetParticles_cff')
+process.load('RecoJets.Configuration.RecoGenJets_cff')
+
+process.antiktGenJets = cms.Path(
+    process.genParticlesForJetsNoNu*
+    process.ak4GenJetsNoNu*
+    process.genParticlesForJetsNoMuNoNu*
+    process.ak4GenJetsNoMuNoNu)
 
 ###process.CorrectedDigis.puMultCorrect = cms.bool(False) # regions with PU corrections
 ###process.UCT2015Producer.puMultCorrect = cms.bool(False) # this would do the same trick, applying both to make sure
@@ -98,7 +119,7 @@ process.p1 = cms.Path(
 
 # Output definition
 process.output = cms.OutputModule("PoolOutputModule",
-    fileName = cms.untracked.string("ntuple_%s_%s_test.root"%(signal_model,signal_point)),
+    fileName = cms.untracked.string("ntuple_%s_%s_ak4nonu_all.root"%(signal_model,signal_point)),
     outputCommands = cms.untracked.vstring('drop *',
           'keep *_l1ntuple_*_L1CustomNtupleProc',
     ) 
@@ -120,6 +141,8 @@ process.l1ntuple = cms.EDProducer( 'L1CustomNtupleProducer' ,
                               L1MHT2015InputTag = cms.InputTag("l1extraParticlesUCT","MHT","L1CustomNtupleProc"),
                               Regions2015InputTag = cms.InputTag("uctDigis","","L1CustomNtupleProc"),
                               CorRegions2015InputTag = cms.InputTag("CorrectedDigis","CorrectedRegions","L1CustomNtupleProc"),
+                              ###
+                              GenJetsInputTag = cms.InputTag("ak4GenJetsNoNu"),
                               ###
                               PUSummaryInfoInputTag = cms.InputTag("addPileupInfo"),
                               ###
