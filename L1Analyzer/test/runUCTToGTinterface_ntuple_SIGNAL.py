@@ -31,6 +31,14 @@ process.source = cms.Source ("PoolSource",fileNames = readFiles, secondaryFileNa
 #signal_model = 'T2tt'
 #signal_point = '500_250'
 
+#from input_T2tt_300_100 import input_files
+#signal_model = 'T2tt'
+#signal_point = '300_100'
+
+#from input_T2tt_300_200 import input_files
+#signal_model = 'T2tt'
+#signal_point = '300_200'
+
 #from input_T2qq_600_100 import input_files
 #signal_model = 'T2qq'
 #signal_point = '600_100'
@@ -39,17 +47,37 @@ process.source = cms.Source ("PoolSource",fileNames = readFiles, secondaryFileNa
 #signal_model = 'T2qq'
 #signal_point = '450_400'
 
+#from input_T2qq_450_350 import input_files
+#signal_model = 'T2qq'
+#signal_point = '450_350'
+
 #from input_T2qq_400_150 import input_files
 #signal_model = 'T2qq'
 #signal_point = '400_150'
 
-from input_T1tttt_1025_625 import input_files
-signal_model = 'T1tttt'
-signal_point = '1025_625'
+from input_T2cc_250_190 import input_files
+signal_model = 'T2cc'
+signal_point = '250_190'
+
+#from input_T2cc_250_210 import input_files
+#signal_model = 'T2cc'
+#signal_point = '250_210'
+
+#from input_T1tttt_1025_625 import input_files
+#signal_model = 'T1tttt'
+#signal_point = '1025_625'
 
 #from input_T1tttt_825_525 import input_files
 #signal_model = 'T1tttt'
 #signal_point = '825_525'
+
+#from input_T1qqqq_1200_425 import input_files
+#signal_model = 'T1qqqq'
+#signal_point = '1200_425'
+
+#from input_T1qqqq_800_575 import input_files
+#signal_model = 'T1qqqq'
+#signal_point = '800_575'
 
 
 readFiles.extend( input_files )
@@ -119,7 +147,7 @@ process.p1 = cms.Path(
 
 # Output definition
 process.output = cms.OutputModule("PoolOutputModule",
-    fileName = cms.untracked.string("ntuple_%s_%s_ak4nonu_all.root"%(signal_model,signal_point)),
+    fileName = cms.untracked.string("ntuple_%s_%s_mht_all.root"%(signal_model,signal_point)),
     outputCommands = cms.untracked.vstring('drop *',
           'keep *_l1ntuple_*_L1CustomNtupleProc',
     ) 
@@ -148,6 +176,7 @@ process.l1ntuple = cms.EDProducer( 'L1CustomNtupleProducer' ,
                               ###
                               applyGenWeights = cms.bool(False),
                               doGenKinematics = cms.bool(True),
+                              doHTVariations = cms.bool(True),
                               )
 
 process.ntuplePath = cms.Path( process.l1ntuple )

@@ -135,12 +135,13 @@ process.l1ntuple = cms.EDProducer( 'L1CustomNtupleProducer' ,
                               Regions2015InputTag = cms.InputTag("uctDigis","","ReRunningL1"),
                               CorRegions2015InputTag = cms.InputTag("CorrectedDigis","CorrectedRegions","L1CustomNtupleProc"),
                               ###
+                              GenJetsInputTag = cms.InputTag("ak4GenJetsNoNu"),
+                              ###
                               PUSummaryInfoInputTag = cms.InputTag("addPileupInfo"),
                               ###
                               applyGenWeights = cms.bool(False),
                               doGenKinematics = cms.bool(False),
-###                              histoname = cms.string("T2tt_800_100_noPU_histos.root")
-###                              histoname = cms.string("T2tt_800_100_seed5_histos.root")
+                              doHTVariations = cms.bool(True),
                               )
 
 process.ntuplePath = cms.Path( process.l1ntuple )

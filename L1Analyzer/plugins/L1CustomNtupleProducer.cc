@@ -145,6 +145,7 @@ private:
 
   bool doGenKinematics_;
   bool applyGenWeights_;
+  bool doHTVariations_;
 
   bool doDebug=false; 
 
@@ -186,6 +187,7 @@ L1CustomNtupleProducer::L1CustomNtupleProducer(const edm::ParameterSet& iConfig)
 
   doGenKinematics_ = iConfig.getParameter<bool>("doGenKinematics");
   applyGenWeights_= iConfig.getParameter<bool>("applyGenWeights"); 
+  doHTVariations_ = iConfig.getParameter<bool>("doHTVariations");
 
   // output branches
   produces<float>  (aliasprefix_+"jet1ptEta30").setBranchAlias(aliasprefix_+"_jet1ptEta30");
@@ -200,17 +202,21 @@ L1CustomNtupleProducer::L1CustomNtupleProducer(const edm::ParameterSet& iConfig)
   produces<float>  (aliasprefix_+"jet4ptEta22").setBranchAlias(aliasprefix_+"_jet4ptEta22");
   produces<float>  (aliasprefix_+"dphiJet12Eta22").setBranchAlias(aliasprefix_+"_dphiJet12Eta22");
 
-  produces<float>  (aliasprefix_+"htEta30RegEt7").setBranchAlias(aliasprefix_+"_htEta30RegEt7");
-  produces<float>  (aliasprefix_+"htEta30RegEt10").setBranchAlias(aliasprefix_+"_htEta30RegEt10");
-  produces<float>  (aliasprefix_+"htEta30RegEt15").setBranchAlias(aliasprefix_+"_htEta30RegEt15");
-  produces<float>  (aliasprefix_+"htEta30RegEt20").setBranchAlias(aliasprefix_+"_htEta30RegEt20");
+  if (doHTVariations_) {
+    produces<float>  (aliasprefix_+"htEta30RegEt7").setBranchAlias(aliasprefix_+"_htEta30RegEt7");
+    produces<float>  (aliasprefix_+"htEta30RegEt10").setBranchAlias(aliasprefix_+"_htEta30RegEt10");
+    produces<float>  (aliasprefix_+"htEta30RegEt15").setBranchAlias(aliasprefix_+"_htEta30RegEt15");
+    produces<float>  (aliasprefix_+"htEta30RegEt20").setBranchAlias(aliasprefix_+"_htEta30RegEt20");
 
-  produces<float>  (aliasprefix_+"htEta22RegEt7").setBranchAlias(aliasprefix_+"_htEta22RegEt7");
-  produces<float>  (aliasprefix_+"htEta22RegEt10").setBranchAlias(aliasprefix_+"_htEta22RegEt10");
-  produces<float>  (aliasprefix_+"htEta22RegEt15").setBranchAlias(aliasprefix_+"_htEta22RegEt15");
-  produces<float>  (aliasprefix_+"htEta22RegEt20").setBranchAlias(aliasprefix_+"_htEta22RegEt20");
+    produces<float>  (aliasprefix_+"htEta22RegEt7").setBranchAlias(aliasprefix_+"_htEta22RegEt7");
+    produces<float>  (aliasprefix_+"htEta22RegEt10").setBranchAlias(aliasprefix_+"_htEta22RegEt10");
+    produces<float>  (aliasprefix_+"htEta22RegEt15").setBranchAlias(aliasprefix_+"_htEta22RegEt15");
+    produces<float>  (aliasprefix_+"htEta22RegEt20").setBranchAlias(aliasprefix_+"_htEta22RegEt20");
+  }
 
   produces<float>  (aliasprefix_+"met").setBranchAlias(aliasprefix_+"_met");
+  produces<float>  (aliasprefix_+"ht").setBranchAlias(aliasprefix_+"_ht");
+  produces<float>  (aliasprefix_+"mht").setBranchAlias(aliasprefix_+"_mht");
 
   produces<float>  (aliasprefix_+"weight").setBranchAlias(aliasprefix_+"_weight");
   produces<float>  (aliasprefix_+"ntrueint").setBranchAlias(aliasprefix_+"_ntrueint");
@@ -239,6 +245,9 @@ L1CustomNtupleProducer::L1CustomNtupleProducer(const edm::ParameterSet& iConfig)
 
     produces<float>  (aliasprefix_+"genmet").setBranchAlias(aliasprefix_+"_genmet");
     produces<float>  (aliasprefix_+"genmetEta30").setBranchAlias(aliasprefix_+"_genmetEta30");
+
+    produces<float>  (aliasprefix_+"genmhtEta30").setBranchAlias(aliasprefix_+"_genmhtEta30");
+    produces<float>  (aliasprefix_+"genmhtEta22").setBranchAlias(aliasprefix_+"_genmhtEta22");
 
     produces<float>  (aliasprefix_+"genmt2Eta30").setBranchAlias(aliasprefix_+"_genmt2Eta30");
     produces<float>  (aliasprefix_+"genmt2Eta22").setBranchAlias(aliasprefix_+"_genmt2Eta22");
@@ -293,6 +302,8 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   auto_ptr<float>   htEta22RegEt20    (new float);
 
   auto_ptr<float>   met           (new float);
+  auto_ptr<float>   ht           (new float);
+  auto_ptr<float>   mht           (new float);
 
   auto_ptr<float>   weight    (new float);
   auto_ptr<float>   ntrueint    (new float);
@@ -321,6 +332,9 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
 
   auto_ptr<float>   genmet           (new float);
   auto_ptr<float>   genmetEta30     (new float);
+
+  auto_ptr<float>   genmhtEta30     (new float);
+  auto_ptr<float>   genmhtEta22     (new float);
 
   auto_ptr<float>   genmt2Eta30     (new float);
   auto_ptr<float>   genmt2Eta22     (new float);
@@ -430,10 +444,15 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
     *genhtEta22 = 0.;
     *ngenjetsPt40Eta30 = 0;
     *ngenjetsPt40Eta22 = 0;
+    *genmhtEta30 = 0.;
+    *genmhtEta22 = 0.;
 
     std::vector<LorentzVector> genJets;
     std::vector<LorentzVector> genJetsCent30;
     std::vector<LorentzVector> genJetsCent22;
+
+    LorentzVector genMHTvec_eta30;
+    LorentzVector genMHTvec_eta22;
 
     for (unsigned iGenJet = 0; iGenJet < genJetsHandle->size(); ++iGenJet) {
       const reco::GenJet& genJet = (*genJetsHandle) [iGenJet];
@@ -447,15 +466,22 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
 
       // should apply some smearing to get jet pt to mock up reco?
 
+      LorentzVector p3(genJet.px(),genJet.py(),genJet.pz(),genJet.energy());
+
       if( genJetPt > 40.0 && fabs(genJetEta)<3.0 ) {
 	*genhtEta30 += genJetPt;
 	++(*ngenjetsPt40Eta30);
+	genMHTvec_eta30 -= p3;
       }
       if( genJetPt > 40.0 && fabs(genJetEta)<2.172 ) {
 	*genhtEta22 += genJetPt;
 	++(*ngenjetsPt40Eta22);
+	genMHTvec_eta22 -= p3;
       }
     } // loop on genjets
+
+    *genmhtEta30 = genMHTvec_eta30.pt();
+    *genmhtEta22 = genMHTvec_eta22.pt();
 
     sort(genJets.begin(),genJets.end(),cmpPtLorentz());
     sort(genJetsCent30.begin(),genJetsCent30.end(),cmpPtLorentz());
@@ -570,7 +596,7 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   }
   if (newJets2015Cent30.size() > 1) {
     *jet2ptEta30 = newJets2015Cent30.at(1).pt();
-    *dphiJet12Eta30 = dphi_normal(newJets2015Cent30.at(0).phi(),newJets2015Cent30.at(1).phi());
+    *dphiJet12Eta30 = dphi(newJets2015Cent30.at(0).phi(),newJets2015Cent30.at(1).phi());
   }
   if (newJets2015Cent30.size() > 2) {
     *jet3ptEta30 = newJets2015Cent30.at(2).pt();
@@ -590,7 +616,7 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   }
   if (newJets2015Cent22.size() > 1) {
     *jet2ptEta22 = newJets2015Cent22.at(1).pt();
-    *dphiJet12Eta22 = dphi_normal(newJets2015Cent22.at(0).phi(),newJets2015Cent22.at(1).phi());
+    *dphiJet12Eta22 = dphi(newJets2015Cent22.at(0).phi(),newJets2015Cent22.at(1).phi());
   }
   if (newJets2015Cent22.size() > 2) {
     *jet3ptEta22 = newJets2015Cent22.at(2).pt();
@@ -624,32 +650,24 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   // plot1D("h_caloMHT",caloMHt_,1,h_1d, nBinMet,0.,maxMet);
   // plot1D("h_caloHT",caloHt_,1,h_1d, nBinHt,0.,maxHt);
 
-//   //
-//   // ----------------------------------------------------------------------
-//   // retrieve the caloMHT objects 2015
-//   //
+  //
+  // ----------------------------------------------------------------------
+  // retrieve the caloMHT objects 2015
+  //
 
-//   edm::Handle<L1EtMissParticleCollection> L1MHT2015Handle;
-//   iEvent.getByLabel(L1MHT2015InputTag, L1MHT2015Handle);
+  *mht = 0.;
+  *ht = 0.;
+
+  edm::Handle<L1EtMissParticleCollection> L1MHT2015Handle;
+  iEvent.getByLabel(L1MHT2015InputTag, L1MHT2015Handle);
   
-//   float caloMHt2015_=0;
-//   float caloHt2015_=0;
+  if (L1MHT2015Handle.isValid() ) {
+    for (L1EtMissParticleCollection::const_iterator mhtIter = L1MHT2015Handle->begin(); mhtIter != L1MHT2015Handle->end(); ++mhtIter) {
+      *mht = mhtIter -> etMiss();
+      *ht = mhtIter -> etTotal();
+    }
+  }
   
-//   if (L1MHT2015Handle.isValid() ) {
-//     for (L1EtMissParticleCollection::const_iterator mhtIter = L1MHT2015Handle->begin(); mhtIter != L1MHT2015Handle->end(); ++mhtIter) {
-//       caloMHt2015_ = mhtIter -> etMiss();
-//       caloHt2015_ = mhtIter -> etTotal();
-
-//       //      cout << "overflowHT " << mhtIter->gctEtMiss()->overFlow() << endl;
-// //      if(mhtIter->gctEtMiss()->overFlow()>0) cout << "!!!!!!!!!!!!! HT2015 BAD OVERFLOW "<< endl;
-
-//       //      cout << "overflowHT2015 " << mhtIter->gctEtTotalRef()->overFlow() << endl;
-//     }
-//   }
-  
-//   plot1D("h_caloMHT2015",caloMHt2015_,1,h_1d, nBinMet,0.,maxMet);
-//   plot1D("h_caloHT2015",caloHt2015_,1,h_1d, nBinHt,0.,maxHt);
-
   //
   // ----------------------------------------------------------------------
   // retrieve the caloMET objects 2015
@@ -669,75 +687,80 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   // ----------------------------------------------------------------------
   // input to the sums, after PU correction
   //
-  Handle<L1CaloRegionCollection> corRegions;
-  iEvent.getByLabel(CorRegions2015InputTag, corRegions);
 
-  float htEta30RegEt0 = 0.;
-  float htEta30RegEt3 = 0.;
-  *htEta30RegEt7 = 0.;
-  *htEta30RegEt10 = 0.;
-  *htEta30RegEt15 = 0.;
-  *htEta30RegEt20 = 0.;
-  float ht_alletaRegEt7 = 0.;
-  float htEta22RegEt0 = 0.;
-  float htEta22RegEt3 = 0.;
-  *htEta22RegEt7 = 0.;
-  *htEta22RegEt10 = 0.;
-  *htEta22RegEt15 = 0.;
-  *htEta22RegEt20 = 0.;
+  if (doHTVariations_) {
 
-  for(L1CaloRegionCollection::const_iterator corRegion = corRegions->begin();
-      corRegion != corRegions->end(); corRegion++){
+    Handle<L1CaloRegionCollection> corRegions;
+    iEvent.getByLabel(CorRegions2015InputTag, corRegions);
 
-    float regionET =  regionPhysicalEt(*corRegion);
+    float htEta30RegEt0 = 0.;
+    float htEta30RegEt3 = 0.;
+    *htEta30RegEt7 = 0.;
+    *htEta30RegEt10 = 0.;
+    *htEta30RegEt15 = 0.;
+    *htEta30RegEt20 = 0.;
+    float ht_alletaRegEt7 = 0.;
+    float htEta22RegEt0 = 0.;
+    float htEta22RegEt3 = 0.;
+    *htEta22RegEt7 = 0.;
+    *htEta22RegEt10 = 0.;
+    *htEta22RegEt15 = 0.;
+    *htEta22RegEt20 = 0.;
 
-    if (regionET >= 7.) {
-      ht_alletaRegEt7 += regionET;
-    }
+    for(L1CaloRegionCollection::const_iterator corRegion = corRegions->begin();
+	corRegion != corRegions->end(); corRegion++){
 
-    // eta range:
-    // 0-21 corresponds to all eta
-    // 4-17 corresponds to |eta| < 3.0 (default)
-    // 5-16 corresponds to |eta| < 2.2
-    if (corRegion->gctEta() >= 4 && corRegion->gctEta() <= 17) {
-      htEta30RegEt0 += regionET;
-      if (regionET >= 3.) {
-	htEta30RegEt3 += regionET;
-      }
+      float regionET =  regionPhysicalEt(*corRegion);
+
       if (regionET >= 7.) {
-	*htEta30RegEt7 += regionET;
+	ht_alletaRegEt7 += regionET;
       }
-      if (regionET >= 10.) {
-	*htEta30RegEt10 += regionET;
-      }
-      if (regionET >= 15.) {
-	*htEta30RegEt15 += regionET;
-      }
-      if (regionET >= 20.) {
-	*htEta30RegEt20 += regionET;
-      }
-    }
 
-    if (corRegion->gctEta() >= 5 && corRegion->gctEta() <= 16) {
-      htEta22RegEt0 += regionET;
-      if (regionET >= 3.) {
-	htEta22RegEt3 += regionET;
+      // eta range:
+      // 0-21 corresponds to all eta
+      // 4-17 corresponds to |eta| < 3.0 (default)
+      // 5-16 corresponds to |eta| < 2.2
+      if (corRegion->gctEta() >= 4 && corRegion->gctEta() <= 17) {
+	htEta30RegEt0 += regionET;
+	if (regionET >= 3.) {
+	  htEta30RegEt3 += regionET;
+	}
+	if (regionET >= 7.) {
+	  *htEta30RegEt7 += regionET;
+	}
+	if (regionET >= 10.) {
+	  *htEta30RegEt10 += regionET;
+	}
+	if (regionET >= 15.) {
+	  *htEta30RegEt15 += regionET;
+	}
+	if (regionET >= 20.) {
+	  *htEta30RegEt20 += regionET;
+	}
       }
-      if (regionET >= 7.) {
-	*htEta22RegEt7 += regionET;
-      }
-      if (regionET >= 10.) {
-	*htEta22RegEt10 += regionET;
-      }
-      if (regionET >= 15.) {
-	*htEta22RegEt15 += regionET;
-      }
-      if (regionET >= 20.) {
-	*htEta22RegEt20 += regionET;
-      }
-    }
 
-  } // loop over regions
+      if (corRegion->gctEta() >= 5 && corRegion->gctEta() <= 16) {
+	htEta22RegEt0 += regionET;
+	if (regionET >= 3.) {
+	  htEta22RegEt3 += regionET;
+	}
+	if (regionET >= 7.) {
+	  *htEta22RegEt7 += regionET;
+	}
+	if (regionET >= 10.) {
+	  *htEta22RegEt10 += regionET;
+	}
+	if (regionET >= 15.) {
+	  *htEta22RegEt15 += regionET;
+	}
+	if (regionET >= 20.) {
+	  *htEta22RegEt20 += regionET;
+	}
+      }
+
+    } // loop over regions
+
+  } // if (doHTVariations_)
 
   // place branches into the event
   iEvent.put(jet1ptEta30,aliasprefix_+"jet1ptEta30");
@@ -752,17 +775,21 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   iEvent.put(jet4ptEta22,aliasprefix_+"jet4ptEta22");
   iEvent.put(dphiJet12Eta22,aliasprefix_+"dphiJet12Eta22");
 
-  iEvent.put(htEta30RegEt7,aliasprefix_+"htEta30RegEt7");
-  iEvent.put(htEta30RegEt10,aliasprefix_+"htEta30RegEt10");
-  iEvent.put(htEta30RegEt15,aliasprefix_+"htEta30RegEt15");
-  iEvent.put(htEta30RegEt20,aliasprefix_+"htEta30RegEt20");
+  if (doHTVariations_) {
+    iEvent.put(htEta30RegEt7,aliasprefix_+"htEta30RegEt7");
+    iEvent.put(htEta30RegEt10,aliasprefix_+"htEta30RegEt10");
+    iEvent.put(htEta30RegEt15,aliasprefix_+"htEta30RegEt15");
+    iEvent.put(htEta30RegEt20,aliasprefix_+"htEta30RegEt20");
 
-  iEvent.put(htEta22RegEt7,aliasprefix_+"htEta22RegEt7");
-  iEvent.put(htEta22RegEt10,aliasprefix_+"htEta22RegEt10");
-  iEvent.put(htEta22RegEt15,aliasprefix_+"htEta22RegEt15");
-  iEvent.put(htEta22RegEt20,aliasprefix_+"htEta22RegEt20");
+    iEvent.put(htEta22RegEt7,aliasprefix_+"htEta22RegEt7");
+    iEvent.put(htEta22RegEt10,aliasprefix_+"htEta22RegEt10");
+    iEvent.put(htEta22RegEt15,aliasprefix_+"htEta22RegEt15");
+    iEvent.put(htEta22RegEt20,aliasprefix_+"htEta22RegEt20");
+  }
 
   iEvent.put(met,aliasprefix_+"met");
+  iEvent.put(ht,aliasprefix_+"ht");
+  iEvent.put(mht,aliasprefix_+"mht");
 
   iEvent.put(weight,aliasprefix_+"weight");
   iEvent.put(ntrueint,aliasprefix_+"ntrueint");
@@ -791,6 +818,9 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
 
     iEvent.put(genmet,aliasprefix_+"genmet");
     iEvent.put(genmetEta30,aliasprefix_+"genmetEta30");
+
+    iEvent.put(genmhtEta30,aliasprefix_+"genmhtEta30");
+    iEvent.put(genmhtEta22,aliasprefix_+"genmhtEta22");
 
     iEvent.put(genmt2Eta30,aliasprefix_+"genmt2Eta30");
     iEvent.put(genmt2Eta22,aliasprefix_+"genmt2Eta22");
