@@ -116,6 +116,7 @@ private:
   float deltaR_normal(float eta1, float phi1, float eta2, float phi2);
   Float_t CalcHemisphereAndMT2(float testmass, bool massive, std::vector<LorentzVector> jets, LorentzVector MET );
   Float_t CalcMT2(float testmass, bool massive, LorentzVector visible1, LorentzVector visible2, LorentzVector MET );
+  float min_dphi(const std::vector<LorentzVector>& p4s, float ptthresh);
 
   double regionPhysicalEt(const L1CaloRegion& cand) const {
     double regionLSB_=0.5;
@@ -195,12 +196,18 @@ L1CustomNtupleProducer::L1CustomNtupleProducer(const edm::ParameterSet& iConfig)
   produces<float>  (aliasprefix_+"jet3ptEta30").setBranchAlias(aliasprefix_+"_jet3ptEta30");
   produces<float>  (aliasprefix_+"jet4ptEta30").setBranchAlias(aliasprefix_+"_jet4ptEta30");
   produces<float>  (aliasprefix_+"dphiJet12Eta30").setBranchAlias(aliasprefix_+"_dphiJet12Eta30");
+  produces<float>  (aliasprefix_+"minDphiJetPt32Eta30").setBranchAlias(aliasprefix_+"_minDphiJetPt32Eta30");
+  produces<float>  (aliasprefix_+"minDphiJetPt60Eta30").setBranchAlias(aliasprefix_+"_minDphiJetPt60Eta30");
+  produces<float>  (aliasprefix_+"minDphiJetPt72Eta30").setBranchAlias(aliasprefix_+"_minDphiJetPt72Eta30");
 
   produces<float>  (aliasprefix_+"jet1ptEta22").setBranchAlias(aliasprefix_+"_jet1ptEta22");
   produces<float>  (aliasprefix_+"jet2ptEta22").setBranchAlias(aliasprefix_+"_jet2ptEta22");
   produces<float>  (aliasprefix_+"jet3ptEta22").setBranchAlias(aliasprefix_+"_jet3ptEta22");
   produces<float>  (aliasprefix_+"jet4ptEta22").setBranchAlias(aliasprefix_+"_jet4ptEta22");
   produces<float>  (aliasprefix_+"dphiJet12Eta22").setBranchAlias(aliasprefix_+"_dphiJet12Eta22");
+  produces<float>  (aliasprefix_+"minDphiJetPt32Eta22").setBranchAlias(aliasprefix_+"_minDphiJetPt32Eta22");
+  produces<float>  (aliasprefix_+"minDphiJetPt60Eta22").setBranchAlias(aliasprefix_+"_minDphiJetPt60Eta22");
+  produces<float>  (aliasprefix_+"minDphiJetPt72Eta22").setBranchAlias(aliasprefix_+"_minDphiJetPt72Eta22");
 
   if (doHTVariations_) {
     produces<float>  (aliasprefix_+"htEta30RegEt7").setBranchAlias(aliasprefix_+"_htEta30RegEt7");
@@ -229,6 +236,9 @@ L1CustomNtupleProducer::L1CustomNtupleProducer(const edm::ParameterSet& iConfig)
     produces<float>  (aliasprefix_+"genjet3ptEta30").setBranchAlias(aliasprefix_+"_genjet3ptEta30");
     produces<float>  (aliasprefix_+"genjet4ptEta30").setBranchAlias(aliasprefix_+"_genjet4ptEta30");
     produces<float>  (aliasprefix_+"genDphiJet12Eta30").setBranchAlias(aliasprefix_+"_genDphiJet12Eta30");
+    produces<float>  (aliasprefix_+"genMinDphiJetPt32Eta30").setBranchAlias(aliasprefix_+"_genMinDphiJetPt32Eta30");
+    produces<float>  (aliasprefix_+"genMinDphiJetPt60Eta30").setBranchAlias(aliasprefix_+"_genMinDphiJetPt60Eta30");
+    produces<float>  (aliasprefix_+"genMinDphiJetPt72Eta30").setBranchAlias(aliasprefix_+"_genMinDphiJetPt72Eta30");
 
     produces<unsigned int>  (aliasprefix_+"ngenjetsPt40Eta30").setBranchAlias(aliasprefix_+"_ngenjetsPt40Eta30");
 
@@ -237,6 +247,9 @@ L1CustomNtupleProducer::L1CustomNtupleProducer(const edm::ParameterSet& iConfig)
     produces<float>  (aliasprefix_+"genjet3ptEta22").setBranchAlias(aliasprefix_+"_genjet3ptEta22");
     produces<float>  (aliasprefix_+"genjet4ptEta22").setBranchAlias(aliasprefix_+"_genjet4ptEta22");
     produces<float>  (aliasprefix_+"genDphiJet12Eta22").setBranchAlias(aliasprefix_+"_genDphiJet12Eta22");
+    produces<float>  (aliasprefix_+"genMinDphiJetPt32Eta22").setBranchAlias(aliasprefix_+"_genMinDphiJetPt32Eta22");
+    produces<float>  (aliasprefix_+"genMinDphiJetPt60Eta22").setBranchAlias(aliasprefix_+"_genMinDphiJetPt60Eta22");
+    produces<float>  (aliasprefix_+"genMinDphiJetPt72Eta22").setBranchAlias(aliasprefix_+"_genMinDphiJetPt72Eta22");
 
     produces<unsigned int>  (aliasprefix_+"ngenjetsPt40Eta22").setBranchAlias(aliasprefix_+"_ngenjetsPt40Eta22");
 
@@ -284,12 +297,18 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   auto_ptr<float>   jet3ptEta30    (new float);
   auto_ptr<float>   jet4ptEta30    (new float);
   auto_ptr<float>   dphiJet12Eta30    (new float);
+  auto_ptr<float>   minDphiJetPt32Eta30    (new float);
+  auto_ptr<float>   minDphiJetPt60Eta30    (new float);
+  auto_ptr<float>   minDphiJetPt72Eta30    (new float);
 
   auto_ptr<float>   jet1ptEta22    (new float);
   auto_ptr<float>   jet2ptEta22    (new float);
   auto_ptr<float>   jet3ptEta22    (new float);
   auto_ptr<float>   jet4ptEta22    (new float);
   auto_ptr<float>   dphiJet12Eta22    (new float);
+  auto_ptr<float>   minDphiJetPt32Eta22    (new float);
+  auto_ptr<float>   minDphiJetPt60Eta22    (new float);
+  auto_ptr<float>   minDphiJetPt72Eta22    (new float);
 
   auto_ptr<float>   htEta30RegEt7     (new float);
   auto_ptr<float>   htEta30RegEt10    (new float);
@@ -316,6 +335,9 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   auto_ptr<float>   genjet3ptEta30    (new float);
   auto_ptr<float>   genjet4ptEta30    (new float);
   auto_ptr<float>   genDphiJet12Eta30    (new float);
+  auto_ptr<float>   genMinDphiJetPt32Eta30 (new float);
+  auto_ptr<float>   genMinDphiJetPt60Eta30 (new float);
+  auto_ptr<float>   genMinDphiJetPt72Eta30 (new float);
 
   auto_ptr<unsigned int>   ngenjetsPt40Eta30    (new unsigned int);
 
@@ -324,6 +346,9 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   auto_ptr<float>   genjet3ptEta22    (new float);
   auto_ptr<float>   genjet4ptEta22    (new float);
   auto_ptr<float>   genDphiJet12Eta22    (new float);
+  auto_ptr<float>   genMinDphiJetPt32Eta22 (new float);
+  auto_ptr<float>   genMinDphiJetPt60Eta22 (new float);
+  auto_ptr<float>   genMinDphiJetPt72Eta22 (new float);
 
   auto_ptr<unsigned int>   ngenjetsPt40Eta22    (new unsigned int);
 
@@ -507,6 +532,10 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
       *genjet4ptEta30 = genJetsCent30.at(3).pt();
     }
 
+    *genMinDphiJetPt32Eta30 = min_dphi(genJetsCent30,32.);
+    *genMinDphiJetPt60Eta30 = min_dphi(genJetsCent30,60.);
+    *genMinDphiJetPt72Eta30 = min_dphi(genJetsCent30,72.);
+
     *genjet1ptEta22 = 0.;
     *genjet2ptEta22 = 0.;
     *genjet3ptEta22 = 0.;
@@ -526,6 +555,10 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
     if (genJetsCent22.size() > 3) {
       *genjet4ptEta22 = genJetsCent22.at(3).pt();
     }
+
+    *genMinDphiJetPt32Eta22 = min_dphi(genJetsCent22,32.);
+    *genMinDphiJetPt60Eta22 = min_dphi(genJetsCent22,60.);
+    *genMinDphiJetPt72Eta22 = min_dphi(genJetsCent22,72.);
 
     // calculate genMT2
     *genmt2Eta30 = CalcHemisphereAndMT2(0.,false,genJetsCent30,genMETvec);
@@ -605,6 +638,10 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
     *jet4ptEta30 = newJets2015Cent30.at(3).pt();
   }
 
+  *minDphiJetPt32Eta30 = min_dphi(newJets2015Cent30, 32.);
+  *minDphiJetPt60Eta30 = min_dphi(newJets2015Cent30, 60.);
+  *minDphiJetPt72Eta30 = min_dphi(newJets2015Cent30, 72.);
+
   *jet1ptEta22 = 0.;
   *jet2ptEta22 = 0.;
   *jet3ptEta22 = 0.;
@@ -625,6 +662,9 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
     *jet4ptEta22 = newJets2015Cent22.at(3).pt();
   }
 
+  *minDphiJetPt32Eta22 = min_dphi(newJets2015Cent22, 32.);
+  *minDphiJetPt60Eta22 = min_dphi(newJets2015Cent22, 60.);
+  *minDphiJetPt72Eta22 = min_dphi(newJets2015Cent22, 72.);
 
   // //
   // // ----------------------------------------------------------------------
@@ -768,12 +808,18 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   iEvent.put(jet3ptEta30,aliasprefix_+"jet3ptEta30");
   iEvent.put(jet4ptEta30,aliasprefix_+"jet4ptEta30");
   iEvent.put(dphiJet12Eta30,aliasprefix_+"dphiJet12Eta30");
+  iEvent.put(minDphiJetPt32Eta30,aliasprefix_+"minDphiJetPt32Eta30");
+  iEvent.put(minDphiJetPt60Eta30,aliasprefix_+"minDphiJetPt60Eta30");
+  iEvent.put(minDphiJetPt72Eta30,aliasprefix_+"minDphiJetPt72Eta30");
 
   iEvent.put(jet1ptEta22,aliasprefix_+"jet1ptEta22");
   iEvent.put(jet2ptEta22,aliasprefix_+"jet2ptEta22");
   iEvent.put(jet3ptEta22,aliasprefix_+"jet3ptEta22");
   iEvent.put(jet4ptEta22,aliasprefix_+"jet4ptEta22");
   iEvent.put(dphiJet12Eta22,aliasprefix_+"dphiJet12Eta22");
+  iEvent.put(minDphiJetPt32Eta22,aliasprefix_+"minDphiJetPt32Eta22");
+  iEvent.put(minDphiJetPt60Eta22,aliasprefix_+"minDphiJetPt60Eta22");
+  iEvent.put(minDphiJetPt72Eta22,aliasprefix_+"minDphiJetPt72Eta22");
 
   if (doHTVariations_) {
     iEvent.put(htEta30RegEt7,aliasprefix_+"htEta30RegEt7");
@@ -802,6 +848,9 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
     iEvent.put(genjet3ptEta30,aliasprefix_+"genjet3ptEta30");
     iEvent.put(genjet4ptEta30,aliasprefix_+"genjet4ptEta30");
     iEvent.put(genDphiJet12Eta30,aliasprefix_+"genDphiJet12Eta30");
+    iEvent.put(genMinDphiJetPt32Eta30,aliasprefix_+"genMinDphiJetPt32Eta30");
+    iEvent.put(genMinDphiJetPt60Eta30,aliasprefix_+"genMinDphiJetPt60Eta30");
+    iEvent.put(genMinDphiJetPt72Eta30,aliasprefix_+"genMinDphiJetPt72Eta30");
 
     iEvent.put(ngenjetsPt40Eta30,aliasprefix_+"ngenjetsPt40Eta30");
 
@@ -810,6 +859,9 @@ L1CustomNtupleProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
     iEvent.put(genjet3ptEta22,aliasprefix_+"genjet3ptEta22");
     iEvent.put(genjet4ptEta22,aliasprefix_+"genjet4ptEta22");
     iEvent.put(genDphiJet12Eta22,aliasprefix_+"genDphiJet12Eta22");
+    iEvent.put(genMinDphiJetPt32Eta22,aliasprefix_+"genMinDphiJetPt32Eta22");
+    iEvent.put(genMinDphiJetPt60Eta22,aliasprefix_+"genMinDphiJetPt60Eta22");
+    iEvent.put(genMinDphiJetPt72Eta22,aliasprefix_+"genMinDphiJetPt72Eta22");
 
     iEvent.put(ngenjetsPt40Eta22,aliasprefix_+"ngenjetsPt40Eta22");
 
@@ -893,6 +945,23 @@ float L1CustomNtupleProducer::deltaR_normal(float eta1, float phi1, float eta2, 
   float diffphi = dphi_normal(phi1,phi2);
   return sqrt(diffeta*diffeta + diffphi*diffphi);
 }
+
+//____________________________________________________________
+float L1CustomNtupleProducer::min_dphi(const std::vector<LorentzVector>& p4s, float ptthresh) {
+  float mindphi = 99.;
+
+  for (unsigned int i = 0; i < p4s.size(); ++i) {
+    if (p4s.at(i).pt() < ptthresh) continue;
+    for (unsigned int j = i+1; j < p4s.size(); ++j) {
+      if (p4s.at(j).pt() < ptthresh) continue;
+      float dphi_val = dphi(p4s.at(i).phi(),p4s.at(j).phi());
+      if (fabs(dphi_val) < fabs(mindphi)) mindphi = dphi_val;
+    } // second p4
+  } // first p4
+
+  return mindphi;
+}
+
 
 //____________________________________________________________
 // calculate hemispheres and input them to MT2 calc
